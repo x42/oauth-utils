@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <oauth.h>
 
 #include "oauth_common.h"
@@ -62,4 +63,79 @@ int oauthsign (int mode, oauthparam *op) {
     if(postargs) free(postargs);
   }
   return (0);
+}
+
+int xxxxxy(int argc, char **argv) {
+  int mode=0; // HTTP methode
+  OAuthMethod signmethod=0;
+  char *base_url;
+  char *okey, *odat, *sign;
+  oauthparam *op;
+
+#if 0
+    argc = oauth_split_post_paramters(url, &argv, 2); // bit0(1): replace '+', bit1(2): don't replace '\001' -> '&'
+    argc = oauth_split_post_paramters(url, &argv, 0);
+    argc = oauth_split_url_parameters(url, &argv);  // same as oauth_split_post_paramters(url, &argv, 1);
+#endif
+
+  // sort parameters
+  qsort(&argv[1], argc-1, sizeof(char *), oauth_cmpstringp);
+  // serialize URL
+  base_url= oauth_serialize_url_parameters(argc, argv);
+  // generate signature
+  okey = oauth_catenc(2, op->c_secret, op->t_secret);
+  odat = oauth_catenc(3, mode&1?"POST":"GET", argv[0], base_url);
+#if 1
+  fprintf (stdout, "base_string='%s'\n", odat);
+  fprintf (stdout, "key='%s'\n", okey);
+#endif
+  switch(signmethod) {
+    case OA_RSA:
+      sign = oauth_sign_rsa_sha1(odat,okey);
+    	break;
+    case OA_PLAINTEXT:
+      sign = oauth_sign_plaintext(odat,okey);
+    	break;
+    default:
+      sign = oauth_sign_hmac_sha1(odat,okey);
+  }
+
+  free(odat); 
+  free(okey);
+#if 0
+
+#define ADD_TO_ARGV \
+  argv=(char**) xrealloc(argv,sizeof(char*)*(argc+1)); \
+  argv[argc++]=xstrdup(oarg); 
+
+  // append signature to query args.
+  snprintf(oarg, 1024, "oauth_signature=%s",sign);
+  ADD_TO_ARGV;
+#endif
+  free(sign);
+
+  // build URL params
+//result = oauth_serialize_url(argc, (postargs?1:0), argv);
+  return argc;
+}
+
+void add_param(int *argcp, char ***argvp, char *addparam) {
+  (*argvp)=(char**) xrealloc(*argvp,sizeof(char*)*((*argcp)+1));
+  (*argvp)[(*argcp)++]= (char*) xstrdup(addparam); 
+}
+
+void add_arg(int *argcp, char ***argvp, char *key, char *val) {
+  char *param = (char*) xmalloc(sizeof(char)*(strlen(key)+strlen(val+2))); 
+  param[0]='\0';
+  strcat(param,key); // XXX must not contain '='
+  strcat(param,"=");
+  strcat(param,val);
+#if 0
+  char *t = oauth_url_escape(key);
+  if (t) { strcat(param,t); free(t); }
+  strcat(param,"=");
+  t = oauth_url_escape(val);
+  if (t) { strcat(param,t); free(t); }
+#endif
+  add_param(argcp, argvp, param);
 }
