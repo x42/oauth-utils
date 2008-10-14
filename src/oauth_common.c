@@ -30,14 +30,14 @@
 extern int want_quiet;
 extern int want_verbose;
 
-int oauthsign ( 
+int oauthsign (
   int mode,       //< mode: 0=GET 1=POST
   char *url,      //< the url to sign
   char *c_key,    //< consumer key
   char *c_secret, //< consumer secret (or NULL)
   char *t_key,    //< token key (or NULL)
   char *t_secret) //< token secret (or NULL)
-{ 
+{
 
   if (mode==1) { // GET
     char *geturl = NULL;

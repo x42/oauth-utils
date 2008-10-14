@@ -60,7 +60,7 @@ char *c_key = NULL;    //< consumer key
 char *c_secret = NULL; //< consumer secret
 char *t_key = NULL;    //< token key
 char *t_secret = NULL; //< token secret
-int mode = 0;          //< mode: 0=GET 1=POST
+int mode = 1;          //< mode: 0=GET 1=POST
 
 static struct option const long_options[] =
 {
@@ -70,6 +70,7 @@ static struct option const long_options[] =
   {"dry-run", no_argument, 0, DRYRUN_CODE},
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'V'},
+
   {"consumer-key", required_argument, 0, 'c'},
   {"consumer-secret", required_argument, 0, 'C'},
   {"token-key", required_argument, 0, 't'},
@@ -78,10 +79,14 @@ static struct option const long_options[] =
   {"CS", required_argument, 0, 'C'},
   {"TK", required_argument, 0, 't'},
   {"TS", required_argument, 0, 'T'},
+
   {"request", required_argument, 0, 'r'},
   {"post", no_argument, 0, 'p'},
+  
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
+
+//{"method", no_argument, 0, 'm'}, // oauth signature method
   {NULL, 0, NULL, 0}
 };
 
@@ -129,14 +134,32 @@ static int decode_switches (int argc, char **argv) {
     mode|=16;
     break;
 	case 'p':
-    mode|=1; // XXX
+    mode&=~(1|2);
+    mode|=1;
     break;
 	case 'r':
+    mode&=~(1|2|4);
+    if (!strncasecmp(optarg,"GET",3))
+      mode|=1;
+ // else if (!strncasecmp(optarg,"POSTREQUEST",4))
+ //   mode|=4;
+    else if (!strncasecmp(optarg,"POST",4))
+      mode|=2;
+    else 
+      usage (EXIT_FAILURE);
     break;
 	case 't':
+    if (c_key) free(c_key);
+    c_key=xstrdup(optarg); 
 	case 'T':
+    if (c_secret) free(c_secret);
+    c_secret=xstrdup(optarg); 
 	case 'c':
+    if (t_key) free(t_key);
+    t_key=xstrdup(optarg); 
 	case 'C':
+    if (t_secret) free(t_secret);
+    t_secret=xstrdup(optarg); 
     break;
 	case 'h':
 	  usage (0);
@@ -180,9 +203,22 @@ int main (int argc, char **argv) {
   program_name = argv[0];
 
   i = decode_switches (argc, argv);
+  if (i>=argc) usage(1);
+  url=xstrdup(argv[i++]);
 
-  /* do the work */
+  if (argc>i) { if (c_key) free(c_key); c_key=xstrdup(argv[i++]); }
+  if (argc>i) { if (c_secret) free(c_secret); c_secret=xstrdup(argv[i++]); }
+  if (argc>i) { if (t_key) free(c_key); t_key=xstrdup(argv[i++]); }
+  if (argc>i) { if (t_secret) free(t_secret); t_secret=xstrdup(argv[i++]); }
+  if (argc>i) 
+      usage(EXIT_FAILURE);
 
+  if (!c_key || strlen(c_key)<1) {
+    fprintf(stderr, "Error: consumer key not set\n");
+    exit(1);
+  }
+
+  oauthsign(mode&3, url, c_key, c_secret, t_key, t_secret);
   exit (0);
 }
 
