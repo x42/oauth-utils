@@ -1,5 +1,5 @@
 /* 
-   oauth_urils - command line utilities for oauth
+   oauthsign - command line oauth
 
    Copyright (C) 2008 Robin Gareus
 
@@ -33,7 +33,6 @@ char *xmalloc ();
 char *xrealloc ();
 char *xstrdup ();
 
-
 static void usage (int status);
 
 /* The name the program was run with, stripped of any leading path. */
@@ -61,40 +60,20 @@ static struct option const long_options[] =
   {NULL, 0, NULL, 0}
 };
 
-static int decode_switches (int argc, char **argv);
 
-int
-main (int argc, char **argv)
-{
-  int i;
-
-  program_name = argv[0];
-
-  i = decode_switches (argc, argv);
-
-  /* do the work */
-
-  exit (0);
-}
-
-/* Set all the option flags according to the switches specified.
-   Return the index of the first non-option argument.  */
-
-static int
-decode_switches (int argc, char **argv)
-{
+/** Set all the option flags according to the switches specified.
+ *  Return the index of the first non-option argument.  
+ */
+static int decode_switches (int argc, char **argv) {
   int c;
-
 
   while ((c = getopt_long (argc, argv, 
 			   "q"	/* quiet or silent */
 			   "v"	/* verbose */
 			   "h"	/* help */
 			   "V",	/* version */
-			   long_options, (int *) 0)) != EOF)
-    {
-      switch (c)
-	{
+			   long_options, (int *) 0)) != EOF) {
+      switch (c) {
 	case 'q':		/* --quiet, --silent */
 	  want_quiet = 1;
 	  break;
@@ -115,7 +94,6 @@ decode_switches (int argc, char **argv)
 	  usage (EXIT_FAILURE);
 	}
     }
-
   return optind;
 }
 
@@ -125,14 +103,36 @@ usage (int status)
 {
   printf (_("%s - \
 command line utilities for oauth\n"), program_name);
-  printf (_("Usage: %s [OPTION]... [FILE]...\n"), program_name);
+  printf (_("Usage: %s [OPTION]... URL [CKey] [CSec] [TKey] [Tsec]\n"), program_name);
   printf (_("\
 Options:\n\
-  --dry-run                  take no real actions\n\
-  -q, --quiet, --silent      inhibit usual output\n\
-  --verbose                  print more information\n\
-  -h, --help                 display this help and exit\n\
-  -V, --version              output version information and exit\n\
+  --dry-run                   take no real actions\n\
+  -q, --quiet, --silent       inhibit usual output\n\
+  --verbose                   print more information\n\
+  -h, --help                  display this help and exit\n\
+  -V, --version               output version information and exit\n\
+  -b, --base-string      \n\
+  -r, --request               HTTP request type (POST, GET)\n\
+  -p, --post                  same as -r POST\n\
+  -c, --CK, --consumer-key     \n\
+  -C, --CS, --consumer-secret   \n\
+  -t, --TK, --token-key        \n\
+  -T, --TS, --token-secret     \n\
 "));
   exit (status);
 }
+
+
+int main (int argc, char **argv) {
+  int i;
+
+  program_name = argv[0];
+
+  i = decode_switches (argc, argv);
+
+  /* do the work */
+
+  exit (0);
+}
+
+/* vim: set sw=2 ts=2 sts=2 et : */

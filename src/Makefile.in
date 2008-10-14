@@ -46,10 +46,13 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_oauthsign_OBJECTS = oauthsign.$(OBJEXT) xmalloc.$(OBJEXT) \
-	getopt.$(OBJEXT) getopt1.$(OBJEXT)
+am_oauthsign_OBJECTS = oauthsign-oauthsign.$(OBJEXT) \
+	oauthsign-oauth_common.$(OBJEXT) oauthsign-xmalloc.$(OBJEXT) \
+	oauthsign-getopt.$(OBJEXT) oauthsign-getopt1.$(OBJEXT)
 oauthsign_OBJECTS = $(am_oauthsign_OBJECTS)
 oauthsign_DEPENDENCIES =
+oauthsign_LINK = $(CCLD) $(oauthsign_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -159,7 +162,8 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-oauthsign_SOURCES = oauthsign.c xmalloc.c getopt.c getopt1.c getopt.h
+oauthsign_SOURCES = oauthsign.c oauth_common.c xmalloc.c getopt.c getopt1.c getopt.h
+oauthsign_CFLAGS = -Werror
 oauthsign_LDADD = -loauth
 all: all-am
 
@@ -219,7 +223,7 @@ clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 oauthsign$(EXEEXT): $(oauthsign_OBJECTS) $(oauthsign_DEPENDENCIES) 
 	@rm -f oauthsign$(EXEEXT)
-	$(LINK) $(oauthsign_OBJECTS) $(oauthsign_LDADD) $(LIBS)
+	$(oauthsign_LINK) $(oauthsign_OBJECTS) $(oauthsign_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -227,10 +231,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt1.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oauthsign.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmalloc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oauthsign-getopt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oauthsign-getopt1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oauthsign-oauth_common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oauthsign-oauthsign.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oauthsign-xmalloc.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -245,6 +250,76 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+oauthsign-oauthsign.o: oauthsign.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-oauthsign.o -MD -MP -MF $(DEPDIR)/oauthsign-oauthsign.Tpo -c -o oauthsign-oauthsign.o `test -f 'oauthsign.c' || echo '$(srcdir)/'`oauthsign.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-oauthsign.Tpo $(DEPDIR)/oauthsign-oauthsign.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='oauthsign.c' object='oauthsign-oauthsign.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-oauthsign.o `test -f 'oauthsign.c' || echo '$(srcdir)/'`oauthsign.c
+
+oauthsign-oauthsign.obj: oauthsign.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-oauthsign.obj -MD -MP -MF $(DEPDIR)/oauthsign-oauthsign.Tpo -c -o oauthsign-oauthsign.obj `if test -f 'oauthsign.c'; then $(CYGPATH_W) 'oauthsign.c'; else $(CYGPATH_W) '$(srcdir)/oauthsign.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-oauthsign.Tpo $(DEPDIR)/oauthsign-oauthsign.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='oauthsign.c' object='oauthsign-oauthsign.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-oauthsign.obj `if test -f 'oauthsign.c'; then $(CYGPATH_W) 'oauthsign.c'; else $(CYGPATH_W) '$(srcdir)/oauthsign.c'; fi`
+
+oauthsign-oauth_common.o: oauth_common.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-oauth_common.o -MD -MP -MF $(DEPDIR)/oauthsign-oauth_common.Tpo -c -o oauthsign-oauth_common.o `test -f 'oauth_common.c' || echo '$(srcdir)/'`oauth_common.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-oauth_common.Tpo $(DEPDIR)/oauthsign-oauth_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='oauth_common.c' object='oauthsign-oauth_common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-oauth_common.o `test -f 'oauth_common.c' || echo '$(srcdir)/'`oauth_common.c
+
+oauthsign-oauth_common.obj: oauth_common.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-oauth_common.obj -MD -MP -MF $(DEPDIR)/oauthsign-oauth_common.Tpo -c -o oauthsign-oauth_common.obj `if test -f 'oauth_common.c'; then $(CYGPATH_W) 'oauth_common.c'; else $(CYGPATH_W) '$(srcdir)/oauth_common.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-oauth_common.Tpo $(DEPDIR)/oauthsign-oauth_common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='oauth_common.c' object='oauthsign-oauth_common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-oauth_common.obj `if test -f 'oauth_common.c'; then $(CYGPATH_W) 'oauth_common.c'; else $(CYGPATH_W) '$(srcdir)/oauth_common.c'; fi`
+
+oauthsign-xmalloc.o: xmalloc.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-xmalloc.o -MD -MP -MF $(DEPDIR)/oauthsign-xmalloc.Tpo -c -o oauthsign-xmalloc.o `test -f 'xmalloc.c' || echo '$(srcdir)/'`xmalloc.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-xmalloc.Tpo $(DEPDIR)/oauthsign-xmalloc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xmalloc.c' object='oauthsign-xmalloc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-xmalloc.o `test -f 'xmalloc.c' || echo '$(srcdir)/'`xmalloc.c
+
+oauthsign-xmalloc.obj: xmalloc.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-xmalloc.obj -MD -MP -MF $(DEPDIR)/oauthsign-xmalloc.Tpo -c -o oauthsign-xmalloc.obj `if test -f 'xmalloc.c'; then $(CYGPATH_W) 'xmalloc.c'; else $(CYGPATH_W) '$(srcdir)/xmalloc.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-xmalloc.Tpo $(DEPDIR)/oauthsign-xmalloc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='xmalloc.c' object='oauthsign-xmalloc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-xmalloc.obj `if test -f 'xmalloc.c'; then $(CYGPATH_W) 'xmalloc.c'; else $(CYGPATH_W) '$(srcdir)/xmalloc.c'; fi`
+
+oauthsign-getopt.o: getopt.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-getopt.o -MD -MP -MF $(DEPDIR)/oauthsign-getopt.Tpo -c -o oauthsign-getopt.o `test -f 'getopt.c' || echo '$(srcdir)/'`getopt.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-getopt.Tpo $(DEPDIR)/oauthsign-getopt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='getopt.c' object='oauthsign-getopt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-getopt.o `test -f 'getopt.c' || echo '$(srcdir)/'`getopt.c
+
+oauthsign-getopt.obj: getopt.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-getopt.obj -MD -MP -MF $(DEPDIR)/oauthsign-getopt.Tpo -c -o oauthsign-getopt.obj `if test -f 'getopt.c'; then $(CYGPATH_W) 'getopt.c'; else $(CYGPATH_W) '$(srcdir)/getopt.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-getopt.Tpo $(DEPDIR)/oauthsign-getopt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='getopt.c' object='oauthsign-getopt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-getopt.obj `if test -f 'getopt.c'; then $(CYGPATH_W) 'getopt.c'; else $(CYGPATH_W) '$(srcdir)/getopt.c'; fi`
+
+oauthsign-getopt1.o: getopt1.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-getopt1.o -MD -MP -MF $(DEPDIR)/oauthsign-getopt1.Tpo -c -o oauthsign-getopt1.o `test -f 'getopt1.c' || echo '$(srcdir)/'`getopt1.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-getopt1.Tpo $(DEPDIR)/oauthsign-getopt1.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='getopt1.c' object='oauthsign-getopt1.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-getopt1.o `test -f 'getopt1.c' || echo '$(srcdir)/'`getopt1.c
+
+oauthsign-getopt1.obj: getopt1.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -MT oauthsign-getopt1.obj -MD -MP -MF $(DEPDIR)/oauthsign-getopt1.Tpo -c -o oauthsign-getopt1.obj `if test -f 'getopt1.c'; then $(CYGPATH_W) 'getopt1.c'; else $(CYGPATH_W) '$(srcdir)/getopt1.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/oauthsign-getopt1.Tpo $(DEPDIR)/oauthsign-getopt1.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='getopt1.c' object='oauthsign-getopt1.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(oauthsign_CFLAGS) $(CFLAGS) -c -o oauthsign-getopt1.obj `if test -f 'getopt1.c'; then $(CYGPATH_W) 'getopt1.c'; else $(CYGPATH_W) '$(srcdir)/getopt1.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
