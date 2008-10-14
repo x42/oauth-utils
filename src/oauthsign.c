@@ -22,10 +22,16 @@
 #include <pwd.h>
 */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <getopt.h>
 #include "system.h"
+
+#include "oauth_common.h"
 
 #define EXIT_FAILURE 1
 
@@ -49,6 +55,14 @@ int want_quiet;			/* --quiet, --silent */
 int want_verbose;		/* --verbose */
 int want_dry_run;		/* --dry-run */
 
+char *url;      //< the url to sign
+char *c_key;    //< consumer key
+char *c_secret; //< consumer secret
+char *t_key;    //< token key
+char *t_secret; //< token secret
+int mode = 0;   //< mode: 0=GET 1=POST
+
+
 static struct option const long_options[] =
 {
   {"quiet", no_argument, 0, 'q'},
@@ -57,6 +71,18 @@ static struct option const long_options[] =
   {"dry-run", no_argument, 0, DRYRUN_CODE},
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'V'},
+  {"consumer-key", no_argument, 0, 'k'},
+  {"consumer-secret", no_argument, 0, 'K'},
+  {"token-key", no_argument, 0, 't'},
+  {"token-secret", no_argument, 0, 'T'},
+  {"CK", no_argument, 0, 'k'},
+  {"CS", no_argument, 0, 'K'},
+  {"TK", no_argument, 0, 't'},
+  {"TS", no_argument, 0, 'T'},
+  {"request", no_argument, 0, 'r'},
+  {"post", no_argument, 0, 'p'},
+  {"base-url", no_argument, 0, 'B'},
+  {"base-string", no_argument, 0, 'b'},
   {NULL, 0, NULL, 0}
 };
 
