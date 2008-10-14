@@ -27,28 +27,22 @@
 #include <stdlib.h>
 #include <oauth.h>
 
+#include "oauth_common.h"
+
 extern int want_quiet;
 extern int want_verbose;
 
-int oauthsign (
-  int mode,       //< mode: 0=GET 1=POST
-  char *url,      //< the url to sign
-  char *c_key,    //< consumer key
-  char *c_secret, //< consumer secret (or NULL)
-  char *t_key,    //< token key (or NULL)
-  char *t_secret) //< token secret (or NULL)
-{
-
+int oauthsign (int mode, oauthparam *op) {
   if (mode==1) { // GET
     char *geturl = NULL;
-    geturl = oauth_sign_url(url, NULL, OA_HMAC, c_key, c_secret, t_key, t_secret);
+    geturl = oauth_sign_url(op->url, NULL, OA_HMAC, op->c_key, op->c_secret, op->t_key, op->t_secret);
     if(geturl) {
       printf("%s\n", geturl);
       free(geturl);
     }
   } else { // POST
     char *postargs = NULL, *post = NULL;
-    post = oauth_sign_url(url, &postargs, OA_HMAC, c_key, c_secret, t_key, t_secret);
+    post = oauth_sign_url(op->url, &postargs, OA_HMAC, op->c_key, op->c_secret, op->t_key, op->t_secret);
     if (!post || !postargs) {
     	return (1);
     }

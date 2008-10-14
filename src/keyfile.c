@@ -1,5 +1,5 @@
 /* 
-   oauth_common - command line oauth
+   oauth utils - keyfile - command line oauth
 
    Copyright (C) 2008 Robin Gareus
 
@@ -19,16 +19,31 @@
 
 */
 
-typedef struct {
-  char *url;      //< the url to sign
-  char *c_key;    //< consumer key
-  char *c_secret; //< consumer secret (or NULL)
-  char *t_key;    //< token key (or NULL)
-  char *t_secret; //< token secret (or NULL)
-} oauthparam;
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
-int oauthsign (int mode, oauthparam *op);
+#include <stdio.h>
 
-int read_keyfile(char *fn, oauthparam *op);
-int save_keyfile(char *fn, oauthparam *op);
+#include "oauth_common.h"
 
+char *xmalloc ();
+char *xrealloc ();
+char *xstrdup ();
+
+extern int want_quiet;
+extern int want_verbose;
+
+int read_keyfile(char *fn, oauthparam *op) {
+  return(-1);
+}
+
+int save_keyfile(char *fn, oauthparam *op) {
+  char sep = '\n'; // '&'
+  FILE *f = fopen(fn, "t");
+  if (!f) return -1;
+  if(op->c_key) fprintf(f,"oauth_consumer_key=%s%c", op->c_key, sep);
+  //...
+
+  return(-1);
+}

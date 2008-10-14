@@ -218,7 +218,14 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
-  oauthsign(mode&3, url, c_key, c_secret, t_key, t_secret);
+  oauthparam op;
+  op.url=url;
+  op.c_key=c_key;
+  op.c_secret=c_secret;
+  op.t_key=t_key;
+  op.t_secret=t_secret;
+
+  oauthsign(mode&3, &op);
   exit (0);
 }
 
