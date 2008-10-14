@@ -32,7 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = oauthsign.c$(EXEEXT)
+bin_PROGRAMS = oauthsign$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -46,9 +46,10 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-oauthsign_c_SOURCES = oauthsign.c
-oauthsign_c_OBJECTS = oauthsign.$(OBJEXT)
-oauthsign_c_LDADD = $(LDADD)
+am_oauthsign_OBJECTS = oauthsign.$(OBJEXT) xmalloc.$(OBJEXT) \
+	getopt.$(OBJEXT) getopt1.$(OBJEXT)
+oauthsign_OBJECTS = $(am_oauthsign_OBJECTS)
+oauthsign_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -56,8 +57,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = oauthsign.c
-DIST_SOURCES = oauthsign.c
+SOURCES = $(oauthsign_SOURCES)
+DIST_SOURCES = $(oauthsign_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -216,9 +217,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-oauthsign.c$(EXEEXT): $(oauthsign_c_OBJECTS) $(oauthsign_c_DEPENDENCIES) 
-	@rm -f oauthsign.c$(EXEEXT)
-	$(LINK) $(oauthsign_c_OBJECTS) $(oauthsign_c_LDADD) $(LIBS)
+oauthsign$(EXEEXT): $(oauthsign_OBJECTS) $(oauthsign_DEPENDENCIES) 
+	@rm -f oauthsign$(EXEEXT)
+	$(LINK) $(oauthsign_OBJECTS) $(oauthsign_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -226,7 +227,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oauthsign.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmalloc.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
