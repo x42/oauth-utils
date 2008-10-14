@@ -55,13 +55,12 @@ int want_quiet;			/* --quiet, --silent */
 int want_verbose;		/* --verbose */
 int want_dry_run;		/* --dry-run */
 
-char *url;      //< the url to sign
-char *c_key;    //< consumer key
-char *c_secret; //< consumer secret
-char *t_key;    //< token key
-char *t_secret; //< token secret
-int mode = 0;   //< mode: 0=GET 1=POST
-
+char *url = NULL;      //< the url to sign
+char *c_key = NULL;    //< consumer key
+char *c_secret = NULL; //< consumer secret
+char *t_key = NULL;    //< token key
+char *t_secret = NULL; //< token secret
+int mode = 0;          //< mode: 0=GET 1=POST
 
 static struct option const long_options[] =
 {
@@ -71,15 +70,15 @@ static struct option const long_options[] =
   {"dry-run", no_argument, 0, DRYRUN_CODE},
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'V'},
-  {"consumer-key", no_argument, 0, 'k'},
-  {"consumer-secret", no_argument, 0, 'K'},
-  {"token-key", no_argument, 0, 't'},
-  {"token-secret", no_argument, 0, 'T'},
-  {"CK", no_argument, 0, 'k'},
-  {"CS", no_argument, 0, 'K'},
-  {"TK", no_argument, 0, 't'},
-  {"TS", no_argument, 0, 'T'},
-  {"request", no_argument, 0, 'r'},
+  {"consumer-key", required_argument, 0, 'c'},
+  {"consumer-secret", required_argument, 0, 'C'},
+  {"token-key", required_argument, 0, 't'},
+  {"token-secret", required_argument, 0, 'T'},
+  {"CK", required_argument, 0, 'c'},
+  {"CS", required_argument, 0, 'C'},
+  {"TK", required_argument, 0, 't'},
+  {"TS", required_argument, 0, 'T'},
+  {"request", required_argument, 0, 'r'},
   {"post", no_argument, 0, 'p'},
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
@@ -97,7 +96,15 @@ static int decode_switches (int argc, char **argv) {
 			   "q"	/* quiet or silent */
 			   "v"	/* verbose */
 			   "h"	/* help */
-			   "V",	/* version */
+			   "V" 	/* version */
+			   "c:" 	/* consumer-key*/
+			   "C:" 	/* consumer-secret */
+			   "t:" 	/* token-key*/
+			   "T:" 	/* token-secret */
+			   "r:" 	/* request */
+			   "p" 	/* post */
+			   "B" 	/* base-URL*/
+			   "b",	/* base-string*/
 			   long_options, (int *) 0)) != EOF) {
       switch (c) {
 	case 'q':		/* --quiet, --silent */
@@ -113,6 +120,24 @@ static int decode_switches (int argc, char **argv) {
 	  printf ("oauth_urils %s\n", VERSION);
 	  exit (0);
 
+	case 'b':
+    mode&=~(8|16);
+    mode|=8;
+    break;
+	case 'B':
+    mode&=~(8|16);
+    mode|=16;
+    break;
+	case 'p':
+    mode|=1; // XXX
+    break;
+	case 'r':
+    break;
+	case 't':
+	case 'T':
+	case 'c':
+	case 'C':
+    break;
 	case 'h':
 	  usage (0);
 
