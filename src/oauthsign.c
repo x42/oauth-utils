@@ -87,6 +87,10 @@ static struct option const long_options[] =
   {"base-string", no_argument, 0, 'b'},
 
 //{"method", no_argument, 0, 'm'}, // oauth signature method
+
+//{"file", required_argument, 0, 'f'},
+//{"write", no_argument, 0, 'w'},  // only if '-f' given.
+//{"writefile", required_argument, 0, 'W'}, //alike `-f XX -w -f YY`
   {NULL, 0, NULL, 0}
 };
 
@@ -135,7 +139,7 @@ static int decode_switches (int argc, char **argv) {
     break;
 	case 'p':
     mode&=~(1|2);
-    mode|=1;
+    mode|=2;
     break;
 	case 'r':
     mode&=~(1|2|4);
@@ -218,14 +222,17 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
+
   oauthparam op;
+  op.signature_method=OA_HMAC;
   op.url=url;
   op.c_key=c_key;
   op.c_secret=c_secret;
   op.t_key=t_key;
   op.t_secret=t_secret;
 
-  oauthsign(mode&3, &op);
+  oauthsign(mode, &op);
+  //oauthsign_alt(mode&3, &op);
   exit (0);
 }
 

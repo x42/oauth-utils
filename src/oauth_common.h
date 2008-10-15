@@ -18,6 +18,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 */
+#include <oauth.h>
 
 typedef struct {
   char *url;      //< the url to sign
@@ -25,10 +26,23 @@ typedef struct {
   char *c_secret; //< consumer secret (or NULL)
   char *t_key;    //< token key (or NULL)
   char *t_secret; //< token secret (or NULL)
+  OAuthMethod signature_method; //< enum 
 } oauthparam;
 
 int oauthsign (int mode, oauthparam *op);
+int oauthsign_alt (int mode, oauthparam *op);
 
+// HTTP API
+int parse_reply(const char *reply, char **token, char **secret);
+
+// mid-level oauth-parameter API
+#if 0 // private
+int url_to_array(int *argcp, char ***argvp, int mode, char *url);
+void add_param_to_array(int *argcp, char ***argvp, char *addparam);
+void add_kv_to_array(int *argcp, char ***argvp, char *key, char *val);
+#endif
+
+// keyfile.c
 int read_keyfile(char *fn, oauthparam *op);
 int save_keyfile(char *fn, oauthparam *op);
 

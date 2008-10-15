@@ -40,20 +40,37 @@ int parseoption (oauthparam *op, char *item, char *value) {
   int rv =0;
   if      (!strncasecmp(item,"oauth_consumer_key",18)) {
     if(op->c_key) free(op->c_key);
-    op->c_key=xstrdup(value);
+    op->c_key=xstrdup(value); rv|=1;
   }
   else if (!strncasecmp(item,"oauth_consumer_secret",21)) {
     if(op->c_secret) free(op->c_secret);
-    op->c_secret=xstrdup(value);
+    op->c_secret=xstrdup(value); rv|=1;
   }
   else if (!strncasecmp(item,"oauth_token_key",15)) {
     if(op->t_key) free(op->t_key);
-    op->t_key=xstrdup(value);
+    op->t_key=xstrdup(value); rv|=1;
   }
   else if (!strncasecmp(item,"oauth_token_secret",18)) {
     if(op->t_secret) free(op->t_secret);
-    op->t_secret=xstrdup(value);
+    op->t_secret=xstrdup(value); rv|=1;
   }
+  else if (!strncasecmp(item,"oauth_token_secret",18)) {
+    if(op->t_secret) free(op->t_secret);
+    op->t_secret=xstrdup(value); rv|=1;
+  }
+  else if (!strncasecmp(item,"oauth_signature_method",22)) {
+    if (!strcmp(value, "PLAINTEXT")) {
+      op->signature_method = OA_RSA;
+      rv|=1;
+    } else if (!strcmp(value, "RSA-SHA1")) {
+      op->signature_method = OA_RSA;
+      rv|=1;
+    } else if (!strcmp(value, "HMAC-SHA1")) {
+      op->signature_method = OA_HMAC; 
+      rv|=1;
+    }
+  }
+  return rv;
 }
 
 #define MAX_LINE_LEN (8192)
@@ -101,6 +118,19 @@ int save_keyfile(char *fn, oauthparam *op) {
   if(op->c_secret) fprintf(f,"oauth_consumer_secret=%s%c", op->c_secret, sep);
   if(op->t_key) fprintf(f,"oauth_token_key=%s%c", op->t_key, sep);
   if(op->t_secret) fprintf(f,"oauth_token_secret=%s%c", op->t_secret, sep);
+  switch(op->signature_method) {
+    case OA_RSA:
+      fprintf(f,"oauth_signature_method=%s%c", "RSA-SHA1", sep);
+      break;
+    case OA_PLAINTEXT:
+      fprintf(f,"oauth_signature_method=%s%c", "PLAINTEXT", sep);
+      break;
+    case OA_HMAC:
+      fprintf(f,"oauth_signature_method=%s%c", "HMAC-SHA1", sep);
+      break;
+    default:
+      break;
+    }
   //... url ?!
   return(-1);
 }
