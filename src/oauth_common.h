@@ -40,6 +40,7 @@ int oauthrequest (int mode, oauthparam *op); // outdated
 char *oauthrequest_ext (int mode, oauthparam *op, int oauthargc, char **oauthargv, char *sign);
 
 // mid-level oauth-parameter API
+void format_array(int mode, int argc, char **argv);
 #if 0 // private
 int url_to_array(int *argcp, char ***argvp, int mode, char *url);
 void add_param_to_array(int *argcp, char ***argvp, char *addparam);

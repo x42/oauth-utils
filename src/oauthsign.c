@@ -366,7 +366,8 @@ int main (int argc, char **argv) {
       printf("%s\n", oaargv[0]);  // POST
       free(oaargv[0]);
     }
-    printf("%s", oauth_serialize_url(oaargc, (mode&2?1:0), oaargv));
+    printf("%s", oauth_serialize_url(oaargc, (mode&2?1:0), oaargv)); // FIXME - use unescaped params for POST.. 
+    // TODO: common -  format_array(mode, oaargc, oaargv);
   }
  
   if (want_write) save_keyfile(datafile, &op); // TODO save final state

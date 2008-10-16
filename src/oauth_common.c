@@ -270,6 +270,10 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int 
   result = oauth_serialize_url(argc, (mode&2?1:0), argv);
   return (result);
 #endif
+}
+
+void format_array(int mode, int argc, char **argv) {
+  ; // TODO
 
 #if 0 // cruft
   // array to url()  - raw parameters (not escaped but sorted)
