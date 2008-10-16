@@ -23,6 +23,7 @@ MAINTAINERCLEANFILES = \
  depcomp \
  install-sh \
  Makefile.in \
+ src/Makefile.in \
  INSTALL \
  missing
 
