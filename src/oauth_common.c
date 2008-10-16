@@ -292,9 +292,9 @@ void format_array(int mode, int argc, char **argv) {
     printf("%s\n\n", argv[0]);
   }
 
-  if (mode&130 == 2) { 
+  if (mode&258 == 2) { 
     array_format_raw(argc, 1, argv, "\n");
-  } else if (mode&130) { // -- encoded parameters..
+  } else if (mode&258) { // -- encoded parameters..
   #if LIBOAUTH_VERSION_MAJOR >= 0 && LIBOAUTH_VERSION_MINOR >= 4  && LIBOAUTH_VERSION_MICRO >= 1
     char *result = oauth_serialize_url_sep(argc, (mode&2?1:0), argv, "\n");
     printf("%s\n", result); 

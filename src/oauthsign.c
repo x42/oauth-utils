@@ -63,8 +63,8 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit4 (16) : -B base-url and exit
                       //  bit5 (32) :  print secrets along with base-string(8)
                       //  bit6 (64) :  print signature after generating it. (unless want_verbose is set: it's printed anyway)
-                      //  bit7 (128):  escape POST parameters with format_array(..)
-                      //  bit8 (256):  parse reply (request token, access token)
+                      //  bit7 (128):  parse reply (request token, access token)
+                      //  bit8 (256):  escape POST parameters with format_array(..)
                       //  bit9 (512): 
                       //
 int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
@@ -96,17 +96,20 @@ static struct option const long_options[] =
 
   {"request", required_argument, 0, 'r'},
   {"post", no_argument, 0, 'p'},
+//{"escape-post-param", no_argument, 0, 'P'},
   
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
 
   {"data", required_argument, 0, 'd'},
 
-//{"method", no_argument, 0, 'm'}, // oauth signature method
+//{"method", no_argument, 0, 'm'}, // TODO - oauth signature method
 
-//{"file", required_argument, 0, 'f'},
-//{"write", no_argument, 0, 'w'},  // only if '-f' given.
-//{"writefile", required_argument, 0, 'W'}, //alike `-f XX -w -f YY`
+  {"file", required_argument, 0, 'f'},
+  {"write", no_argument, 0, 'w'},  // only if '-f' given.
+//{"writefile", required_argument, 0, 'F'}, 
+//{"execute", no_argument, 0, 'x'}, 
+//{"oauthrequest", no_argument, 0, 'X'}, 
   {NULL, 0, NULL, 0}
 };
 
@@ -145,6 +148,7 @@ static int decode_switches (int argc, char **argv) {
 			   "e"  /* erase token */
 			   "E"  /* erase token and conusmer */
 			   "p" 	/* post */
+			   "P" 	/* print escaped post parameters */
 			   "B"  /* base-URL*/
 			   "b"  /* base-string*/
 			   "d:" /* URL-query parameter data eg.
@@ -231,6 +235,9 @@ static int decode_switches (int argc, char **argv) {
       case 'E':
         reset_oauth_param(&op);
         break;
+      case 'P':
+        mode|=256;
+        break;
       case 'h':
         usage (0);
 
@@ -284,7 +291,7 @@ Options:\n\
   to out.txt along with the new secret\n\
   \n\
   The request URL is constructed by first parsing all query-parameters from\n\
-  the URL; then -d parameters are added, and finally oauth_XXX params \n\
+  the URL; then -d parameters are added, and finally oauth_XYZ params \n\
   appended.\n\
   \n\
 "));
