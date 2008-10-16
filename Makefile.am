@@ -1,6 +1,6 @@
 SUBDIRS = src
 
-EXTRA_DIST=oauth_utils.lsm.in oauth_utils.spec.in doc/oauth_utils.texinfo doc/example.sh
+EXTRA_DIST=oauth_utils.lsm.in oauth_utils.spec.in doc/example.sh
 
 TESTS=doc/example.sh
 

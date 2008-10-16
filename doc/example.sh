@@ -1,5 +1,8 @@
 #!/bin/sh
+OAUTHSIGN=./src/oauthsign
+if ! test -x $OAUTHSIGN; then
 OAUTHSIGN=../src/oauthsign
+fi
 
 #TOKENFILE=`mktemp /tmp/oauth.XXXXXXXXXX` || exit 1
 TOKENFILE="/tmp/test.oaf"
@@ -34,9 +37,11 @@ echo " +++ exchanging request token for access token"
 $OAUTHSIGN -X -f $TOKENFILE -w "${BASEURL}${DOPARAM}${ACT}" --quiet || ( echo "token exchange failed"; exit 1;) || exit 1;
 
 echo " +++ making test request.."
-$OAUTHSIGN -x -f $TOKENFILE "${BASEURL}${TST}"
+$OAUTHSIGN -x -f $TOKENFILE "${BASEURL}${TST}" || exit 1
 
 echo " +++ and another one" 
-$OAUTHSIGN -x -f $TOKENFILE -d "method=foo%&bar" -d "bar=foo bar" --post --dry-run "${BASEURL}echo_api.php"
+$OAUTHSIGN -x -f $TOKENFILE -d "method=foo%&bar" -d "bar=foo bar" --post "${BASEURL}echo_api.php" || exit 1
 
-# rm $TOKENFILE
+rm $TOKENFILE
+
+exit 0
