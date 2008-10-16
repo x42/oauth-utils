@@ -1,12 +1,18 @@
-#!/bin/sh
+#!/bin/bash
+
 OAUTHSIGN=./src/oauthsign
 if ! test -x $OAUTHSIGN; then
-OAUTHSIGN=../src/oauthsign
+  OAUTHSIGN=../src/oauthsign
+fi
+if ! test -x $OAUTHSIGN; then
+  OAUTHSIGN=$(which oauthsign)
+fi
+if ! test -x $OAUTHSIGN; then
+  echo " oauthsign executable not found."
+  exit 1
 fi
 
-#TOKENFILE=`mktemp /tmp/oauth.XXXXXXXXXX` || exit 1
-TOKENFILE="/tmp/test.oaf"
-
+# default config
 CONKEY="key"
 CONSEC="secret"
 BASEURL="http://term.ie/oauth/example/"
@@ -16,14 +22,21 @@ ACT="access_token.php"
 #AUT="authenticate.php?"
 TST="echo_api.php?method=foo%20bar&bar=baz"
 
-
-CONFIGFILE="./oauthconfX"
+# read config file - override above settings
+CONFIGFILE="./oauthconf"
 if [ -e $CONFIGFILE ]; then
  . $CONFIGFILE
 fi
 
+TOKENFILE=`mktemp /tmp/oauth.XXXXXXXXXX` || exit 1
+
+function cleanup {
+  rm $TOKENFILE
+}
+trap cleanup EXIT
+
 echo " +++ getting request token.."
-$OAUTHSIGN -X -f $TOKENFILE -w -e -c $CONKEY -C $CONSEC "${BASEURL}${DOPARAM}${RQT}" || ( echo "no request token returned."; exit 1;) || exit 1;
+$OAUTHSIGN -X -f $TOKENFILE -w -e -c $CONKEY -C $CONSEC "${BASEURL}${DOPARAM}${RQT}" || ( echo " !!! no request token returned."; exit 1;) || exit 1;
 
 if [ -n "$AUT" ]; then
   REQTOK=$(cat $TOKENFILE | awk '/oauth_token_key=(.*)/{ print substr($1,17);}')
@@ -34,14 +47,12 @@ if [ -n "$AUT" ]; then
 fi
 
 echo " +++ exchanging request token for access token"
-$OAUTHSIGN -X -f $TOKENFILE -w "${BASEURL}${DOPARAM}${ACT}" --quiet || ( echo "token exchange failed"; exit 1;) || exit 1;
+$OAUTHSIGN -X -f $TOKENFILE -w "${BASEURL}${DOPARAM}${ACT}" --quiet || ( echo " !!! token exchange failed"; exit 1;) || exit 1;
 
 echo " +++ making test request.."
-$OAUTHSIGN -x -f $TOKENFILE "${BASEURL}${TST}" || exit 1
+$OAUTHSIGN -x -f $TOKENFILE "${BASEURL}${TST}" || ( echo " !!! test request failed"; exit 1;) || exit 1
 
 echo " +++ and another one" 
-$OAUTHSIGN -x -f $TOKENFILE -d "method=foo%&bar" -d "bar=foo bar" --post "${BASEURL}echo_api.php" || exit 1
-
-rm $TOKENFILE
+$OAUTHSIGN -x -f $TOKENFILE -d "method=foo%&bar" -d "bar=foo bar" --post "${BASEURL}echo_api.php" || ( echo " !!! test request failed"; exit 1;) || exit 1
 
 exit 0
