@@ -295,14 +295,16 @@ int main (int argc, char **argv) {
 
   // TODO:
   // error if  "-w" and no file-name "-f" or "-F"
-  // warning if "-w" no actual request performed... "-x" 
+  // warning if "-w" no actual request performed... "-x", "-X"
 
 
   // do the work.
+  #if 0
   printf ("debug: ck=%s\n",op.c_key);
   printf ("debug: cs=%s\n",op.c_secret);
   printf ("debug: tk=%s\n",op.t_key);
   printf ("debug: ts=%s\n",op.t_secret);
+  #endif
  
   if (want_write) save_keyfile(datafile, &op); // TODO save current state
 
@@ -321,18 +323,22 @@ int main (int argc, char **argv) {
     char *sign, *reply;
     sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
     if (!sign) ; // TODO: error
-    printf("huhu %s\n", sign);
+    if (want_verbose) printf("oauth_signature=%s\n", sign);
     reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
-    printf("haha %s\n", reply);
-    if (!reply) ; // TODO: error
-    printf("-----------------\n", reply);
+    if (!reply) { 
+      ; // TODO: error
+    } else if (want_verbose) {
+      printf("http_reply:\n %s\n", reply);
+      printf("------HTTP reply------\n", reply);
+      printf("%s\n", reply);
+      printf("----------------------\n", reply);
+    }
     if (mode&128) {
       reset_oauth_token(&op);
       if (parse_reply(reply, &(op.t_key), &(op.t_secret))) { 
         want_write=0;
         // TODO: error
-      } else {
-        printf("-----------------\n", reply);
+      } else if (want_verbose) {
         printf ("token=%s\n",op.t_key);
         printf ("token_secret=%s\n",op.t_secret);
       }
@@ -342,11 +348,25 @@ int main (int argc, char **argv) {
     if (reply) free(reply);
 
   } else {
+    int oaargc =0;
+    char **oaargv= NULL;
     char *sign;
-    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, NULL, NULL);
-    if (sign) free(sign);
+
+    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
+    if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
+    if (sign) { 
+      add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
+      free(sign);
+    }
     //oauthsign(mode, &op);
     //oauthsign_alt(mode&3, &op);
+    
+    // TODO: proper output
+    if (mode&2) { // TODO assert(argc>0) !!
+      printf("%s\n", oaargv[0]);  // POST
+      free(oaargv[0]);
+    }
+    printf("%s", oauth_serialize_url(oaargc, (mode&2?1:0), oaargv));
   }
  
   if (want_write) save_keyfile(datafile, &op); // TODO save final state
