@@ -61,8 +61,8 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit2 (4)  : (unused ; old oauthrequest() compat)
                       //  bit3 (8)  : -b base-string and exit
                       //  bit4 (16) : -B base-url and exit
-                      //  bit5 (32) : 
-                      //  bit6 (64) : 
+                      //  bit5 (32) :  print secrets along with base-string(8)
+                      //  bit6 (64) :  print signature after generating it. (unless want_verbose is set: it's printed anyway)
                       //  bit7 (128):  
                       //  bit8 (256): parse reply (request token, access token)
                       //  bit9 (512): 
@@ -208,7 +208,7 @@ static int decode_switches (int argc, char **argv) {
         if (op.c_secret) free(op.c_secret);
         op.c_secret=xstrdup(optarg); 
         break;
-      case 'd': // XXX
+      case 'd': 
         add_param_to_array(&oauth_argc, &oauth_argv,optarg);
         break;
       case 'f':
@@ -250,20 +250,30 @@ command line utilities for oauth\n"), program_name);
   printf (_("Usage: %s [OPTION]... URL [CKey] [CSec] [TKey] [Tsec]\n"), program_name);
   printf (_("\
 Options:\n\
-  --dry-run                   take no real actions\n\
-  -q, --quiet, --silent       inhibit usual output\n\
-  -v, --verbose               print more information\n\
   -h, --help                  display this help and exit\n\
   -V, --version               output version information and exit\n\
-  -b, --base-string      \n\
+  -q, --quiet, --silent       inhibit usual output\n\
+  -v, --verbose               print more information\n\
+  -b, --base-string           print OAuth base-string and exit\n\
+  -B, --base-url              print OAuth base-URL and exit\n\
   -r, --request               HTTP request type (POST, GET)\n\
   -p, --post                  same as -r POST\n\
-  -c, --CK, --consumer-key     \n\
-  -C, --CS, --consumer-secret   \n\
-  -t, --TK, --token-key        \n\
-  -T, --TS, --token-secret     \n\
-  ... \n\
-  other flags: e,E,r,x,X,b,B,d,f,F,w ...\n\
+  -d, --data <key>[=<val>]    add url query parameters.\n\
+  \n\
+  -c, --CK, --consumer-key     <text>\n\
+  -C, --CS, --consumer-secret  <text> \n\
+  -t, --TK, --token-key        <text> \n\
+  -T, --TS, --token-secret     <text> \n\
+  \n\
+  -f, --file <filename>       read tokens and secrets from config-file\n\
+  --dry-run                   take no real actions (with -x or -X)\n\
+  -x                          make HTTP request and return the replied content\n\
+  -X                          make HTTP request and parse the reply for tokens\n\
+  -w                          write tokens to config-file\n\
+  -F <filename>               set config-file name w/o reading the file.\n\
+  -e, --erase-token           clear [access|request] token settings.\n\
+  -E, --erase-all             wipe [access|request] and consumer token settings.\n\
+  \n\
 "));
   exit (status);
 }
@@ -271,6 +281,7 @@ Options:\n\
 
 int main (int argc, char **argv) {
   int i;
+  int exitval=0;
 
   program_name = argv[0];
   memset(&op,0,sizeof(oauthparam));
@@ -306,39 +317,62 @@ int main (int argc, char **argv) {
   printf ("debug: ts=%s\n",op.t_secret);
   #endif
  
-  if (want_write) save_keyfile(datafile, &op); // TODO save current state
+  if (want_write && !want_dry_run) save_keyfile(datafile, &op); // save current state
+  
+  int oaargc =0;
+  char **oaargv= NULL;
+  char *sign;
+  sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
 
-  if(request_mode) {
-    // if (!want_dry_run) // TODO honor this here ?! 
-    // oauthrequest(mode&2, &op);
+  if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
+
+  if(!request_mode) {
+    if (sign) { 
+      add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
+      free(sign);
+    }
+    format_array(mode, oaargc, oaargv);
+  } else { // request=mode 
     //
+    // oauthrequest(mode&2, &op);
     // work in progres: 
     // split this up - don't use oauthrequest() - walk thru oauthsign_ext() 
     // make the request, parse and save.. or output if not quiet.
     // LATER: provide a dedicated standalone executables that does a direct 
     // POST, GET request alike current oauthrequest() without all the 
     // '-b', '-B' options. - eg. oauthrawpost, oauthget etc.
-    int oaargc =0;
-    char **oaargv= NULL;
-    char *sign, *reply;
-    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
-    if (!sign) ; // TODO: error
-    if (want_verbose) printf("oauth_signature=%s\n", sign);
-    reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
+    char *reply;
+    //
+    if (!sign) { 
+      // TODO: error
+      exitval|=1;
+    }
+    if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
+
+    if (!want_dry_run) {
+      reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
+    } else { 
+      printf("DRY-RUN. not making any HTTP request.\n"); 
+      if (sign) add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
+      format_array(mode, oaargc, oaargv);
+      reply=NULL;
+    }
+
     if (!reply) { 
       ; // TODO: error
-    } else if (want_verbose) {
-      printf("http_reply:\n %s\n", reply);
-      printf("------HTTP reply------\n", reply);
+      exitval|=2;
+    } else if (want_verbose || (mode&128)==0) {
+      if(want_verbose) printf("------HTTP reply------\n");
       printf("%s\n", reply);
-      printf("----------------------\n", reply);
+      if(want_verbose) printf("----------------------\n");
     }
+
     if (mode&128) {
       reset_oauth_token(&op);
       if (parse_reply(reply, &(op.t_key), &(op.t_secret))) { 
-        want_write=0;
         // TODO: error
-      } else if (want_verbose) {
+        exitval|=4;
+      } else if (!want_quiet) {
         printf ("token=%s\n",op.t_key);
         printf ("token_secret=%s\n",op.t_secret);
       }
@@ -346,33 +380,13 @@ int main (int argc, char **argv) {
 
     if (sign) free(sign);
     if (reply) free(reply);
-
-  } else {
-    int oaargc =0;
-    char **oaargv= NULL;
-    char *sign;
-
-    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
-    if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
-    if (sign) { 
-      add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
-      free(sign);
-    }
-    //oauthsign(mode, &op);
-    //oauthsign_alt(mode&3, &op);
-    
-    // TODO: proper output
-    if (mode&2) { // TODO assert(argc>0) !!
-      printf("%s\n", oaargv[0]);  // POST
-      free(oaargv[0]);
-    }
-    printf("%s", oauth_serialize_url(oaargc, (mode&2?1:0), oaargv)); // FIXME - use unescaped params for POST.. 
-    // TODO: common -  format_array(mode, oaargc, oaargv);
   }
  
-  if (want_write) save_keyfile(datafile, &op); // TODO save final state
+  if (exitval==0 && want_write && !want_dry_run) save_keyfile(datafile, &op); // save final state
 
-  exit (0);
+  // TODO free oaargv and oauth_argv arrays..
+
+  return (exitval);
 }
 
 /* vim: set sw=2 ts=2 sts=2 et : */

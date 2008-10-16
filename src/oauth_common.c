@@ -33,7 +33,7 @@
 extern int want_quiet;
 extern int want_verbose;
 
-
+#if 0 // obsolte
 int oauthrequest (int mode, oauthparam *op) {
   if (mode&2==0) { // GET
     char *geturl = NULL;
@@ -67,7 +67,9 @@ int oauthrequest (int mode, oauthparam *op) {
   }
   return (0);
 }
+#endif
 
+#if 0 // outdated
 int oauthsign_alt (int mode, oauthparam *op) {
   if (mode==1) { // GET
     char *geturl = NULL;
@@ -99,6 +101,7 @@ int oauthsign_alt (int mode, oauthparam *op) {
   }
   return (0);
 }
+#endif
 
 /**
  * split and parse URL parameters replied by a oauth-server
@@ -109,6 +112,7 @@ int parse_reply(const char *reply, char **token, char **secret) {
   int ok=-1; // error
   char **rv = NULL;
   rc = oauth_split_url_parameters(reply, &rv);
+  //if (rc>0)
   qsort(rv, rc, sizeof(char *), oauth_cmpstringp);
   if( rc==2 
       && !strncmp(rv[0],"oauth_token=",11)
@@ -116,9 +120,6 @@ int parse_reply(const char *reply, char **token, char **secret) {
     ok=0;
     if (token)  *token = (char*) xstrdup(&(rv[0][12]));
     if (secret) *secret= (char*) xstrdup(&(rv[1][19]));
-#if 1
-    printf("key:    '%s'\nsecret: '%s'\n",*token, *secret); // XXX 
-#endif
   }
   if(rv) free(rv);
   return ok;
@@ -138,14 +139,6 @@ int url_to_array(int *argcp, char ***argvp, int mode, char *url) {
 }
 
 void add_param_to_array(int *argcp, char ***argvp, char *addparam) {
-#if 0
-#define ADD_TO_ARGV \
-  argv=(char**) xrealloc(argv,sizeof(char*)*(argc+1)); \
-  argv[argc++]=xstrdup(oarg); 
-  // append signature to query args.
-  snprintf(oarg, 1024, "oauth_signature=%s",sign);
-  ADD_TO_ARGV;
-#endif
   (*argvp)=(char**) xrealloc(*argvp,sizeof(char*)*((*argcp)+1));
   (*argvp)[(*argcp)++]= (char*) xstrdup(addparam); 
 }
@@ -215,7 +208,7 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
   }
   free(odat); 
   free(okey);
-  if (mode&128 || want_verbose) fprintf(stdout, "oauth_signature=%s\n",sign); 
+  if (mode&64 && !want_verbose) fprintf(stdout, "oauth_signature=%s\n",sign); 
   return sign; // needs to be free()d
 }
 
@@ -272,33 +265,45 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int 
 #endif
 }
 
+void array_format_raw(int argc, int start, char **argv, char *sep) {
+    // array to url()  - raw parameters (not escaped)
+    int i=start;
+    if (i==0 && argc>0) printf("%s?", argv[i++]);
+    while(i<argc) {
+      printf("%s", argv[i]);
+      free(argv[i++]);
+      if (i+1<argc)printf("%s",sep);
+    }
+    printf("\n");
+
+}
+
 void format_array(int mode, int argc, char **argv) {
-  ; // TODO
+  if (argc<1 || !argv) return;
 
-#if 0 // cruft
-  // array to url()  - raw parameters (not escaped but sorted)
-  int i=0;
-  printf("%s?", argv[i]);
-  while(++i<argc) {
-    printf("%s", argv[i]);
-    free(argv[i]);
-    if (i+1<argc)printf("&");
-  }
-  printf("\n");
-#endif
-#if 0 // cruft
-  // array to url()  - escape parameters
-  char *result; 
-  result = oauth_serialize_url(argc, (mode&2?1:0), argv);
-
-  if (mode&2) { // TODO assert(argc>0) !!
-    printf("%s\n\n", argv[0]);  // POST
+  if (mode&2) { // POST
+    printf("%s\n\n", argv[0]);
     free(argv[0]);
   }
-  printf("%s\n", result); 
+
+  if (mode&2 && 0) { 
+    array_format_raw(argc, 1, argv, "\n");
+  } else if (mode&2 && 0) { // TODO - add mode for this ?!
+    array_format_raw(argc, 1, argv, "&");
+  } else if (mode&2 && 1) { // TODO  -- encoded parameters..
+  #if LIBOAUTH_VERSION_MAJOR >= 0 && LIBOAUTH_VERSION_MINOR >= 4  && LIBOAUTH_VERSION_MICRO >= 1
+    char *result = oauth_serialize_url_sep(argc, (mode&2?1:0), argv, "\n");
+    printf("%s\n", result); 
+    free (result);
+  #else
+    fprintf(stderr, "ERROR: encoded parameter output is not supported by this version of liboauth.\n" ); 
+  #endif
+  } else {
+    char *result = oauth_serialize_url(argc, (mode&2?1:0), argv);
+    printf("%s\n", result); 
+    free (result);
+  }
   if (argv) free(argv);
-  free (result);
-#endif
 }
 
 char *oauthsign (int mode, oauthparam *op) {
