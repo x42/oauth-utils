@@ -193,17 +193,20 @@ static int decode_switches (int argc, char **argv) {
           usage (EXIT_FAILURE);
         break;
       case 't':
-        if (op.c_key) free(op.c_key);
-        op.c_key=xstrdup(optarg); 
-      case 'T':
-        if (op.c_secret) free(op.c_secret);
-        op.c_secret=xstrdup(optarg); 
-      case 'c':
         if (op.t_key) free(op.t_key);
         op.t_key=xstrdup(optarg); 
-      case 'C':
+        break;
+      case 'T':
         if (op.t_secret) free(op.t_secret);
         op.t_secret=xstrdup(optarg); 
+        break;
+      case 'c':
+        if (op.c_key) free(op.c_key);
+        op.c_key=xstrdup(optarg); 
+        break;
+      case 'C':
+        if (op.c_secret) free(op.c_secret);
+        op.c_secret=xstrdup(optarg); 
         break;
       case 'd': // XXX
         add_param_to_array(&oauth_argc, &oauth_argv,optarg);
@@ -274,6 +277,7 @@ int main (int argc, char **argv) {
   reset_oauth_param(&op);
 
   i = decode_switches (argc, argv);
+
   if (i>=argc) usage(1);
   op.url=xstrdup(argv[i++]);
 
@@ -295,8 +299,12 @@ int main (int argc, char **argv) {
 
 
   // do the work.
+  printf ("debug: ck=%s\n",op.c_key);
+  printf ("debug: cs=%s\n",op.c_secret);
+  printf ("debug: tk=%s\n",op.t_key);
+  printf ("debug: ts=%s\n",op.t_secret);
  
-  if (0 && want_write) save_keyfile(datafile, &op); // TODO save current state
+  if (want_write) save_keyfile(datafile, &op); // TODO save current state
 
   if(request_mode) {
     // if (!want_dry_run) // TODO honor this here ?! 
@@ -312,10 +320,23 @@ int main (int argc, char **argv) {
     char **oaargv= NULL;
     char *sign, *reply;
     sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
-    if (!sign) ; // error
+    if (!sign) ; // TODO: error
+    printf("huhu %s\n", sign);
     reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
-    if (!reply) ; // error
-    if ((mode&128) && parse_reply(reply, &op.t_key, &op.t_secret)); // error
+    printf("haha %s\n", reply);
+    if (!reply) ; // TODO: error
+    printf("-----------------\n", reply);
+    if (mode&128) {
+      reset_oauth_token(&op);
+      if (parse_reply(reply, &(op.t_key), &(op.t_secret))) { 
+        want_write=0;
+        // TODO: error
+      } else {
+        printf("-----------------\n", reply);
+        printf ("token=%s\n",op.t_key);
+        printf ("token_secret=%s\n",op.t_secret);
+      }
+    }
 
     if (sign) free(sign);
     if (reply) free(reply);
@@ -328,7 +349,7 @@ int main (int argc, char **argv) {
     //oauthsign_alt(mode&3, &op);
   }
  
-  if (0 && want_write) save_keyfile(datafile, &op); // TODO save final state
+  if (want_write) save_keyfile(datafile, &op); // TODO save final state
 
   exit (0);
 }

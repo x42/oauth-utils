@@ -54,10 +54,6 @@ int parseoption (oauthparam *op, char *item, char *value) {
     if(op->t_secret) free(op->t_secret);
     op->t_secret=xstrdup(value); rv|=1;
   }
-  else if (!strncasecmp(item,"oauth_token_secret",18)) {
-    if(op->t_secret) free(op->t_secret);
-    op->t_secret=xstrdup(value); rv|=1;
-  }
   else if (!strncasecmp(item,"oauth_signature_method",22)) {
     if (!strcmp(value, "PLAINTEXT")) {
       op->signature_method = OA_RSA;
@@ -92,18 +88,17 @@ int read_keyfile(char *fn, oauthparam *op) {
     token = strtok(line, "\t =&\n\r") ; 
     if(token != NULL && token[0] != '#' && token[0] != ';') {
       item=strdup(token);
-      token = strtok( NULL, "\t =i&\n\r" ) ; 
+      token = strtok( NULL, "\t =&\n\r" ) ; 
       if (!token) {
 		    free(item);
 		    fprintf(stderr, "ERROR parsing config file. %s:%d\n",fn,lineno);
 		    exit(1);
       }	
-	    value=strdup(token);
-      if (!parseoption(op,item,value)) {
+      if (!parseoption(op,item,token)) {
         fprintf(stderr, "ERROR parsing config file. %s:%d\n",fn,lineno);
         exit(1);
       }
-      free(item); free(value);
+      free(item);
     }
   }
   fclose(fp);
@@ -132,5 +127,8 @@ int save_keyfile(char *fn, oauthparam *op) {
       break;
     }
   //... url ?!
+  fclose(f);
   return(-1);
 }
+
+/* vim: set sw=2 ts=2 sts=2 et : */

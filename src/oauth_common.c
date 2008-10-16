@@ -114,8 +114,8 @@ int parse_reply(const char *reply, char **token, char **secret) {
       && !strncmp(rv[0],"oauth_token=",11)
       && !strncmp(rv[1],"oauth_token_secret=",18) ) {
     ok=0;
-    if (token)  *token =strdup(&(rv[0][12]));
-    if (secret) *secret=strdup(&(rv[1][19]));
+    if (token)  *token = (char*) xstrdup(&(rv[0][12]));
+    if (secret) *secret= (char*) xstrdup(&(rv[1][19]));
 #if 1
     printf("key:    '%s'\nsecret: '%s'\n",*token, *secret); // XXX 
 #endif
@@ -259,19 +259,17 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int 
   }
 
   sign=process_array(argc, argv, mode, op);
+  return (sign);
 
+#if 0 // cruft
   if (sign) {
     add_kv_to_array(&argc, &argv, "oauth_signature", sign);
     free(sign);
   }
   char *result; 
   result = oauth_serialize_url(argc, (mode&2?1:0), argv);
-#if 0 // TODO 
-    if (op->request_url) free(op->request_url);
-    op->request_url=argv[0]; // not freed here.
-  }
-#endif
   return (result);
+#endif
 
 #if 0 // cruft
   // array to url()  - raw parameters (not escaped but sorted)
@@ -313,7 +311,6 @@ char *oauthrequest_ext (int mode, oauthparam *op, int oauthargc, char **oautharg
 
   if (sign) {
     add_kv_to_array(&argc, &argv, "oauth_signature", sign);
-    free(sign);
   }
  
   // build URL params
