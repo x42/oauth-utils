@@ -27,9 +27,11 @@ typedef struct {
   char *t_key;    //< token key (or NULL)
   char *t_secret; //< token secret (or NULL)
   OAuthMethod signature_method; //< enum 
+//char *request_method;   //< GET, POST, PUT, 
 } oauthparam;
 
-int oauthsign (int mode, oauthparam *op);
+char *oauthsign (int mode, oauthparam *op);
+char *oauthsign_ext (int mode, oauthparam *op, int optargcp, char **optargv);
 int oauthsign_alt (int mode, oauthparam *op);
 
 // HTTP API

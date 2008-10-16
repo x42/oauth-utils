@@ -51,20 +51,18 @@ enum {DUMMY_CODE=129
 
 /* Option flags and variables */
 
-int want_quiet;			/* --quiet, --silent */
-int want_verbose;		/* --verbose */
-int want_dry_run;		/* --dry-run */
+int want_quiet   = 0; /* --quiet, --silent */
+int want_verbose = 0; /* --verbose */
+int want_dry_run = 0; /* --dry-run */
 
-char *url = NULL;      //< the url to sign
-char *c_key = NULL;    //< consumer key
-char *c_secret = NULL; //< consumer secret
-char *t_key = NULL;    //< token key
-char *t_secret = NULL; //< token secret
-int mode = 1;          //< mode: 0=GET 1=POST
-int request_mode = 0;  //< mode: 0=GET 1=POST
+int mode         = 1; ///< mode: 0=GET 1=POST
+int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
 
+int want_write   = 0;
 int   oauth_argc = 0;
-char *oauth_argv = NULL;
+char **oauth_argv = NULL;
+char *datafile   = NULL;
+oauthparam op;
 
 static struct option const long_options[] =
 {
@@ -101,6 +99,21 @@ static struct option const long_options[] =
   {NULL, 0, NULL, 0}
 };
 
+void reset_oauth_param(oauthparam *op) {
+  if (op->t_key) free(op->t_key);
+  if (op->t_secret) free(op->t_secret);
+  if (op->c_key) free(op->c_key);
+  if (op->c_secret) free(op->c_secret);
+  memset(op,0,sizeof(oauthparam));
+  op->signature_method=OA_HMAC;
+}
+
+void reset_oauth_token(oauthparam *op) {
+  if (op->t_key) free(op->t_key);
+  if (op->t_secret) free(op->t_secret);
+  op->t_key=NULL;
+  op->t_secret=NULL;
+}
 
 /** Set all the option flags according to the switches specified.
  *  Return the index of the first non-option argument.  
@@ -113,80 +126,101 @@ static int decode_switches (int argc, char **argv) {
 			   "v"	/* verbose */
 			   "h"	/* help */
 			   "V" 	/* version */
-			   "c:" 	/* consumer-key*/
-			   "C:" 	/* consumer-secret */
-			   "t:" 	/* token-key*/
-			   "T:" 	/* token-secret */
-			   "r:" 	/* request */
+			   "c:" /* consumer-key*/
+			   "C:" /* consumer-secret */
+			   "t:" /* token-key*/
+			   "T:" /* token-secret */
+			   "r:" /* request */
+			   "e"  /* erase token */
+			   "E"  /* erase token and conusmer */
 			   "p" 	/* post */
-			   "B" 	/* base-URL*/
-			   "b" 	/* base-string*/
-			   "d" 	/* data */
+			   "B"  /* base-URL*/
+			   "b"  /* base-string*/
+			   "d:" /* URL-query parameter data eg.
+               * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
+			   "f:" /* read key/data file */
+			   "F:" /* set key/data filename */
+			   "w" 	/* write to key/data file, save request/access token state */
 			   "x",	/* execute */
 			   long_options, (int *) 0)) != EOF) {
-      switch (c) {
-	case 'q':		/* --quiet, --silent */
-	  want_quiet = 1;
-	  break;
-	case 'v':		/* --verbose */
-	  want_verbose = 1;
-	  break;
-	case DRYRUN_CODE:	/* --dry-run */
-	  want_dry_run = 1;
-	  break;
-	case 'V':
-	  printf ("oauth_urils %s\n", VERSION);
-	  exit (0);
+    switch (c) {
+      case 'q':		/* --quiet, --silent */
+        want_quiet = 1;
+        break;
+      case 'v':		/* --verbose */
+        want_verbose = 1;
+        break;
+      case DRYRUN_CODE:	/* --dry-run */
+        want_dry_run = 1;
+        break;
+      case 'V':
+        printf ("oauth_urils %s\n", VERSION);
+        exit (0);
 
-	case 'b':
-    mode&=~(8|16);
-    mode|=8;
-    break;
-	case 'B':
-    mode&=~(8|16);
-    mode|=16;
-    break;
-	case 'p':
-    mode&=~(1|2);
-    mode|=2;
-    break;
-	case 'r':
-    mode&=~(1|2|4);
-    if (!strncasecmp(optarg,"GET",3))
-      mode|=1;
- // else if (!strncasecmp(optarg,"POSTREQUEST",4))
- //   mode|=4;
-    else if (!strncasecmp(optarg,"POST",4))
-      mode|=2;
-    else 
-      usage (EXIT_FAILURE);
-    break;
-	case 't':
-    if (c_key) free(c_key);
-    c_key=xstrdup(optarg); 
-	case 'T':
-    if (c_secret) free(c_secret);
-    c_secret=xstrdup(optarg); 
-	case 'c':
-    if (t_key) free(t_key);
-    t_key=xstrdup(optarg); 
-	case 'C':
-    if (t_secret) free(t_secret);
-    t_secret=xstrdup(optarg); 
-    break;
-	case 'd': // XXX
-    add_param_to_array(&oauth_argc, &oauth_argv,optarg);
-    break;
-	case 'x':
-    request_mode=1;
-    break;
-	case 'h':
-	  usage (0);
+      case 'b':
+        mode&=~(8|16);
+        mode|=8;
+        break;
+      case 'B':
+        mode&=~(8|16);
+        mode|=16;
+        break;
+      case 'p':
+        mode&=~(1|2);
+        mode|=2;
+        break;
+      case 'r':
+        mode&=~(1|2|4);
+        if (!strncasecmp(optarg,"GET",3))
+          mode|=1;
+     // else if (!strncasecmp(optarg,"POSTREQUEST",4))
+     //   mode|=4;
+        else if (!strncasecmp(optarg,"POST",4))
+          mode|=2;
+        else 
+          usage (EXIT_FAILURE);
+        break;
+      case 't':
+        if (op.c_key) free(op.c_key);
+        op.c_key=xstrdup(optarg); 
+      case 'T':
+        if (op.c_secret) free(op.c_secret);
+        op.c_secret=xstrdup(optarg); 
+      case 'c':
+        if (op.t_key) free(op.t_key);
+        op.t_key=xstrdup(optarg); 
+      case 'C':
+        if (op.t_secret) free(op.t_secret);
+        op.t_secret=xstrdup(optarg); 
+        break;
+      case 'd': // XXX
+        add_param_to_array(&oauth_argc, &oauth_argv,optarg);
+        break;
+      case 'f':
+        read_keyfile(optarg, &op);
+      case 'F':
+        if (datafile) free(datafile);
+        datafile=xstrdup(optarg);
+        break;
+      case 'w':
+        want_write=1;
+        break;
+      case 'x':
+        request_mode=1;
+        break;
+      case 'e':
+        reset_oauth_token(&op);
+        break;
+      case 'E':
+        reset_oauth_param(&op);
+        break;
+      case 'h':
+        usage (0);
 
-	default:
-	  usage (EXIT_FAILURE);
-	}
+      default:
+        usage (EXIT_FAILURE);
     }
+  }
   return optind;
 }
 
@@ -201,7 +235,7 @@ command line utilities for oauth\n"), program_name);
 Options:\n\
   --dry-run                   take no real actions\n\
   -q, --quiet, --silent       inhibit usual output\n\
-  --verbose                   print more information\n\
+  -v, --verbose               print more information\n\
   -h, --help                  display this help and exit\n\
   -V, --version               output version information and exit\n\
   -b, --base-string      \n\
@@ -211,6 +245,8 @@ Options:\n\
   -C, --CS, --consumer-secret   \n\
   -t, --TK, --token-key        \n\
   -T, --TS, --token-secret     \n\
+  ... \n\
+  other flags: e,E,r,x,b,B,d,f,F,w ...\n\
 "));
   exit (status);
 }
@@ -220,44 +256,53 @@ int main (int argc, char **argv) {
   int i;
 
   program_name = argv[0];
+  memset(&op,0,sizeof(oauthparam));
+  reset_oauth_param(&op);
 
   i = decode_switches (argc, argv);
   if (i>=argc) usage(1);
-  url=xstrdup(argv[i++]);
+  op.url=xstrdup(argv[i++]);
 
-  if (argc>i) { if (c_key) free(c_key); c_key=xstrdup(argv[i++]); }
-  if (argc>i) { if (c_secret) free(c_secret); c_secret=xstrdup(argv[i++]); }
-  if (argc>i) { if (t_key) free(c_key); t_key=xstrdup(argv[i++]); }
-  if (argc>i) { if (t_secret) free(t_secret); t_secret=xstrdup(argv[i++]); }
+  if (argc>i) { if (op.c_key) free(op.c_key); op.c_key=xstrdup(argv[i++]); }
+  if (argc>i) { if (op.c_secret) free(op.c_secret); op.c_secret=xstrdup(argv[i++]); }
+  if (argc>i) { if (op.t_key) free(op.c_key); op.t_key=xstrdup(argv[i++]); }
+  if (argc>i) { if (op.t_secret) free(op.t_secret); op.t_secret=xstrdup(argv[i++]); }
   if (argc>i) 
       usage(EXIT_FAILURE);
 
-  if (!c_key || strlen(c_key)<1) {
+  if (!op.c_key || strlen(op.c_key)<1) {
     fprintf(stderr, "Error: consumer key not set\n");
     exit(1);
   }
 
+  // TODO:
+  // error if  "-w" and no file-name "-f" or "-F"
+  // warning if "-w" no actual request performed... "-x" 
 
-  oauthparam op;
-  op.signature_method=OA_HMAC;
-  op.url=url;
-  op.c_key=c_key;
-  op.c_secret=c_secret;
-  op.t_key=t_key;
-  op.t_secret=t_secret;
 
-  if (oauth_argc>0) {
-    ;
-  }
+  // do the work.
+ 
+  if (0 && want_write) save_keyfile(datafile, &op); // TODO save current state
 
   if(request_mode) {
-    oauthrequest(mode, &op);
-    // parese and save..
+    // if (!want_dry_run) // TODO honor this here ?! 
+    oauthrequest(mode&2, &op);
+    // TODO: 
+    // split this up - don't use oauthrequest() - walk thru oauthsign_ext() 
+    // make the request, parse and save.. or output if not quiet.
+    // LATER: provide a dedicated standalone executables that does a direct 
+    // POST, GET request alike current oauthrequest() without all the 
+    // '-b', '-B' options. - eg. oauthrawpost, oauthget etc.
+  } else {
+    char *sign;
+    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv);
+    if (sign) free(sign);
+    //oauthsign(mode, &op);
+    //oauthsign_alt(mode&3, &op);
   }
-  else 
-    oauthsign(mode, &op);
+ 
+  if (0 && want_write) save_keyfile(datafile, &op); // TODO save final state
 
-  //oauthsign_alt(mode&3, &op);
   exit (0);
 }
 

@@ -4,7 +4,7 @@ AC_INIT(oauthsign.c)
 AC_CONFIG_SRCDIR(src/oauthsign.c)
 
 dnl Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(oauthsign, 0.1.0)
+AM_INIT_AUTOMAKE(oauthsign, 0.0.2)
 
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
 AM_CONFIG_HEADER(config.h)

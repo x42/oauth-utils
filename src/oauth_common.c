@@ -41,7 +41,7 @@ int oauthrequest (int mode, oauthparam *op) {
     if(!geturl) {
     	return (1);
     }
-    //printf("%s\n", geturl);
+    // TODO: re-build the URL from original unsorted parameters for the query
     char *reply = oauth_http_get(geturl, NULL);
     if(reply){
       //write(STDOUT, reply, strlen(reply))
@@ -55,6 +55,7 @@ int oauthrequest (int mode, oauthparam *op) {
     if (!post || !postargs) {
     	return (1);
     }
+    // TODO: re-build the URL from original unsorted parameters for the query
     char *reply = oauth_http_post(post,postargs);
     if(reply){
       //write(STDOUT, reply, strlen(reply))
@@ -168,6 +169,15 @@ void add_kv_to_array(int *argcp, char ***argvp, char *key, char *val) {
   free(param);
 }
 
+void append_parameters(int *dest_argcp, char ***dest_argvp, int src_argcp, char **src_argvp) {
+  int i;
+  if (!src_argvp && !src_argcp>0)  return;
+  if (!dest_argcp || !dest_argvp)  return;
+  for (i=0; i< src_argcp;i++) {
+    add_param_to_array(dest_argcp,dest_argvp,src_argvp[i]);
+  }
+}
+
 char *process_array(int argc, char **argv, int mode, oauthparam *op) {
   char *base_url;
   char *okey, *odat, *sign;
@@ -229,12 +239,14 @@ void add_oauth_params_to_array (int *argcp, char ***argvp, oauthparam *op) {
 }
 
 // basically oauth_sign_url() from liboauth in steps..
-int oauthsign (int mode, oauthparam *op) {
+char *oauthsign_ext (int mode, oauthparam *op, int optargcp, char **optargv) {
   int argc=0;
   char **argv = NULL;
   char *sign=NULL;
 
   url_to_array(&argc, &argv, mode, op->url);
+
+  append_parameters(&argc, &argv, optargcp, optargv);
 
   add_oauth_params_to_array(&argc, &argv, op);
 
@@ -244,8 +256,16 @@ int oauthsign (int mode, oauthparam *op) {
     add_kv_to_array(&argc, &argv, "oauth_signature", sign);
     free(sign);
   }
+  char *result; 
+  result = oauth_serialize_url(argc, (mode&2?1:0), argv);
+#if 0 // TODO 
+    if (op->request_url) free(op->request_url);
+    op->request_url=argv[0]; // not freed here.
+  }
+#endif
+  return (result);
 
-#if 0
+#if 0 // cruft
   // array to url()  - raw parameters (not escaped but sorted)
   int i=0;
   printf("%s?", argv[i]);
@@ -255,7 +275,8 @@ int oauthsign (int mode, oauthparam *op) {
     if (i+1<argc)printf("&");
   }
   printf("\n");
-#else
+#endif
+#if 0 // cruft
   // array to url()  - escape parameters
   char *result; 
   result = oauth_serialize_url(argc, (mode&2?1:0), argv);
@@ -266,9 +287,12 @@ int oauthsign (int mode, oauthparam *op) {
   }
   printf("%s\n", result); 
   if (argv) free(argv);
-  free (result); // TODO return (result);
+  free (result);
 #endif
-  return(0);
+}
+
+char *oauthsign (int mode, oauthparam *op) {
+  return oauthsign_ext(mode, op, 0, NULL);
 }
 
 /* vim: set sw=2 ts=2 sts=2 et : */
