@@ -55,7 +55,18 @@ int want_quiet   = 0; /* --quiet, --silent */
 int want_verbose = 0; /* --verbose */
 int want_dry_run = 0; /* --dry-run */
 
-int mode         = 1; ///< mode: 0=GET 1=POST
+int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit coded 
+                      //  bit0 (1)  : enable ?! (also see want_dry_run)
+                      //  bit1 (2)  : HTTP POST enable (no GET) 
+                      //  bit2 (4)  : (unused ; old oauthrequest() compat)
+                      //  bit3 (8)  : -b base-string and exit
+                      //  bit4 (16) : -B base-url and exit
+                      //  bit5 (32) : 
+                      //  bit6 (64) : 
+                      //  bit7 (128):  
+                      //  bit8 (256): parse reply (request token, access token)
+                      //  bit9 (512): 
+                      //
 int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
 
 int want_write   = 0;
@@ -141,7 +152,8 @@ static int decode_switches (int argc, char **argv) {
 			   "f:" /* read key/data file */
 			   "F:" /* set key/data filename */
 			   "w" 	/* write to key/data file, save request/access token state */
-			   "x",	/* execute */
+			   "x" 	/* execute */
+			   "X",	/* execute and parse reply (TODO: link with '-w' ?!) */
 			   long_options, (int *) 0)) != EOF) {
     switch (c) {
       case 'q':		/* --quiet, --silent */
@@ -205,6 +217,8 @@ static int decode_switches (int argc, char **argv) {
       case 'w':
         want_write=1;
         break;
+      case 'X':
+        mode|=128; // parse reply and enter request mode..
       case 'x':
         request_mode=1;
         break;
@@ -246,7 +260,7 @@ Options:\n\
   -t, --TK, --token-key        \n\
   -T, --TS, --token-secret     \n\
   ... \n\
-  other flags: e,E,r,x,b,B,d,f,F,w ...\n\
+  other flags: e,E,r,x,X,b,B,d,f,F,w ...\n\
 "));
   exit (status);
 }
@@ -286,16 +300,29 @@ int main (int argc, char **argv) {
 
   if(request_mode) {
     // if (!want_dry_run) // TODO honor this here ?! 
-    oauthrequest(mode&2, &op);
-    // TODO: 
+    // oauthrequest(mode&2, &op);
+    //
+    // work in progres: 
     // split this up - don't use oauthrequest() - walk thru oauthsign_ext() 
     // make the request, parse and save.. or output if not quiet.
     // LATER: provide a dedicated standalone executables that does a direct 
     // POST, GET request alike current oauthrequest() without all the 
     // '-b', '-B' options. - eg. oauthrawpost, oauthget etc.
+    int oaargc =0;
+    char **oaargv= NULL;
+    char *sign, *reply;
+    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
+    if (!sign) ; // error
+    reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
+    if (!reply) ; // error
+    if ((mode&128) && parse_reply(reply, &op.t_key, &op.t_secret)); // error
+
+    if (sign) free(sign);
+    if (reply) free(reply);
+
   } else {
     char *sign;
-    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv);
+    sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, NULL, NULL);
     if (sign) free(sign);
     //oauthsign(mode, &op);
     //oauthsign_alt(mode&3, &op);

@@ -106,7 +106,7 @@ int oauthsign_alt (int mode, oauthparam *op) {
  */
 int parse_reply(const char *reply, char **token, char **secret) {
   int rc;
-  int ok=1;
+  int ok=-1; // error
   char **rv = NULL;
   rc = oauth_split_url_parameters(reply, &rv);
   qsort(rv, rc, sizeof(char *), oauth_cmpstringp);
@@ -134,8 +134,7 @@ int url_to_array(int *argcp, char ***argvp, int mode, char *url) {
     (*argcp) = 0;
   }
   return (*argcp);
-// reverse:
-//result = oauth_serialize_url(argc, (postargs?1:0), argv);
+// reverse: result = oauth_serialize_url(argc, (postargs?1:0), argv);
 }
 
 void add_param_to_array(int *argcp, char ***argvp, char *addparam) {
@@ -169,12 +168,19 @@ void add_kv_to_array(int *argcp, char ***argvp, char *key, char *val) {
   free(param);
 }
 
-void append_parameters(int *dest_argcp, char ***dest_argvp, int src_argcp, char **src_argvp) {
+void clear_parameters(int *argcp, char ***argvp) {
+  if (!argcp || !argvp)  return; // error !
+// TODO; free old values...
+  *argcp =0;
+  *argvp=NULL;
+}
+
+void append_parameters(int *dest_argcp, char ***dest_argvp, int src_argc, char **src_argv) {
   int i;
-  if (!src_argvp && !src_argcp>0)  return;
+  if (!src_argv && !src_argc>0)  return;
   if (!dest_argcp || !dest_argvp)  return;
-  for (i=0; i< src_argcp;i++) {
-    add_param_to_array(dest_argcp,dest_argvp,src_argvp[i]);
+  for (i=0; i< src_argc;i++) {
+    add_param_to_array(dest_argcp,dest_argvp,src_argv[i]);
   }
 }
 
@@ -239,16 +245,18 @@ void add_oauth_params_to_array (int *argcp, char ***argvp, oauthparam *op) {
 }
 
 // basically oauth_sign_url() from liboauth in steps..
-char *oauthsign_ext (int mode, oauthparam *op, int optargcp, char **optargv) {
+char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int *saveargcp, char ***saveargvp) {
   int argc=0;
   char **argv = NULL;
   char *sign=NULL;
 
   url_to_array(&argc, &argv, mode, op->url);
-
-  append_parameters(&argc, &argv, optargcp, optargv);
-
+  append_parameters(&argc, &argv, optargc, optargv);
   add_oauth_params_to_array(&argc, &argv, op);
+  if (saveargvp && saveargcp) {
+    clear_parameters(saveargcp, saveargvp);
+    append_parameters(saveargcp, saveargvp, argc, argv);
+  }
 
   sign=process_array(argc, argv, mode, op);
 
@@ -292,7 +300,39 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargcp, char **optargv) {
 }
 
 char *oauthsign (int mode, oauthparam *op) {
-  return oauthsign_ext(mode, op, 0, NULL);
+  return oauthsign_ext(mode, op, 0, NULL, NULL, NULL);
 }
+
+// basically oauth_sign_url() from liboauth in steps..
+char *oauthrequest_ext (int mode, oauthparam *op, int oauthargc, char **oauthargv, char *sign) {
+  int argc=0;
+  char **argv = NULL;
+  char *request=NULL;
+
+  append_parameters(&argc, &argv, oauthargc, oauthargv);
+
+  if (sign) {
+    add_kv_to_array(&argc, &argv, "oauth_signature", sign);
+    free(sign);
+  }
+ 
+  // build URL params
+  request = oauth_serialize_url(argc, (mode&2?1:0), argv);
+
+  char *reply = NULL;
+  if(request) {
+    if (mode&2) { // POST
+      reply = oauth_http_post(argv[0],request);
+    } else { // GET
+      reply= oauth_http_get(request, NULL);
+    }
+    free(request);
+  }
+  free(argv[0]); // XXX
+  if(argv) free(argv);
+
+  return reply;
+}
+
 
 /* vim: set sw=2 ts=2 sts=2 et : */
