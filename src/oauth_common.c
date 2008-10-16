@@ -41,7 +41,6 @@ int oauthrequest (int mode, oauthparam *op) {
     if(!geturl) {
     	return (1);
     }
-    // TODO: re-build the URL from original unsorted parameters for the query
     char *reply = oauth_http_get(geturl, NULL);
     if(reply){
       //write(STDOUT, reply, strlen(reply))
@@ -55,7 +54,6 @@ int oauthrequest (int mode, oauthparam *op) {
     if (!post || !postargs) {
     	return (1);
     }
-    // TODO: re-build the URL from original unsorted parameters for the query
     char *reply = oauth_http_post(post,postargs);
     if(reply){
       //write(STDOUT, reply, strlen(reply))
@@ -126,12 +124,12 @@ int parse_reply(const char *reply, char **token, char **secret) {
 }
 
 int url_to_array(int *argcp, char ***argvp, int mode, char *url) {
-  if (mode&1) // GET
-    (*argcp) = oauth_split_url_parameters(url, argvp);  // same as oauth_split_post_paramters(url, &argv, 1);
-  else if (mode&2) // POST
+  if (mode&2) // POST
     (*argcp) = oauth_split_post_paramters(url, argvp, 2); // bit0(1): replace '+', bit1(2): don't replace '\001' -> '&'
-  else {
-    fprintf(stderr, "WARNING: don't know how to parse request\n"); // XXX
+  else if ((mode&2) == 0) // GET
+    (*argcp) = oauth_split_url_parameters(url, argvp);  // same as oauth_split_post_paramters(url, &argv, 1);
+  else { // TODO: add support for PUT, DELETE, etc
+    fprintf(stderr, "WARNING: don't know how to parse request\n");
     (*argcp) = 0;
   }
   return (*argcp);
@@ -161,9 +159,18 @@ void add_kv_to_array(int *argcp, char ***argvp, char *key, char *val) {
   free(param);
 }
 
+void free_array(int argc, char **argv) {
+  if (argc<1 || !argv) return;
+  int i=0;
+  while(i<argc) {
+      free(argv[i++]);
+  }
+  free(argv);
+}
+
 void clear_parameters(int *argcp, char ***argvp) {
   if (!argcp || !argvp)  return; // error !
-// TODO; free old values...
+  free_array(*argcp,*argvp);
   *argcp =0;
   *argvp=NULL;
 }
@@ -191,7 +198,7 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
 
   // generate signature
   okey = oauth_catenc(2, op->c_secret, op->t_secret);
-  odat = oauth_catenc(3, mode&2?"POST":"GET", argv[0], base_url);
+  odat = oauth_catenc(3, mode&2?"POST":"GET", argv[0], base_url); // TODO: add support for PUT, DELETE ...
   if (mode&8  || want_verbose) fprintf(stdout, "base-string=%s\n",odat); // base-string
   if (mode&32 || want_verbose) fprintf(stdout, "secrets=%s\n",okey); 
   if (mode&8) exit(0);
@@ -252,7 +259,7 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int 
   }
 
   sign=process_array(argc, argv, mode, op);
-  return (sign);
+  return (sign); // needs to be free()d.
 
 #if 0 // cruft
   if (sign) {
@@ -271,7 +278,7 @@ void array_format_raw(int argc, int start, char **argv, char *sep) {
     if (i==0 && argc>0) printf("%s?", argv[i++]);
     while(i<argc) {
       printf("%s", argv[i]);
-      free(argv[i++]);
+      i++;
       if (i+1<argc)printf("%s",sep);
     }
     printf("\n");
@@ -283,14 +290,11 @@ void format_array(int mode, int argc, char **argv) {
 
   if (mode&2) { // POST
     printf("%s\n\n", argv[0]);
-    free(argv[0]);
   }
 
-  if (mode&2 && 0) { 
+  if (mode&130 == 2) { 
     array_format_raw(argc, 1, argv, "\n");
-  } else if (mode&2 && 0) { // TODO - add mode for this ?!
-    array_format_raw(argc, 1, argv, "&");
-  } else if (mode&2 && 1) { // TODO  -- encoded parameters..
+  } else if (mode&130) { // -- encoded parameters..
   #if LIBOAUTH_VERSION_MAJOR >= 0 && LIBOAUTH_VERSION_MINOR >= 4  && LIBOAUTH_VERSION_MICRO >= 1
     char *result = oauth_serialize_url_sep(argc, (mode&2?1:0), argv, "\n");
     printf("%s\n", result); 
@@ -298,12 +302,13 @@ void format_array(int mode, int argc, char **argv) {
   #else
     fprintf(stderr, "ERROR: encoded parameter output is not supported by this version of liboauth.\n" ); 
   #endif
+  } else if (mode&2 && 0) { // TODO - add mode for this ?!
+    array_format_raw(argc, 1, argv, "&");
   } else {
     char *result = oauth_serialize_url(argc, (mode&2?1:0), argv);
     printf("%s\n", result); 
     free (result);
   }
-  if (argv) free(argv);
 }
 
 char *oauthsign (int mode, oauthparam *op) {
@@ -334,9 +339,7 @@ char *oauthrequest_ext (int mode, oauthparam *op, int oauthargc, char **oautharg
     }
     free(request);
   }
-  free(argv[0]); // XXX
-  if(argv) free(argv);
-
+  free_array(argc,argv);
   return reply;
 }
 

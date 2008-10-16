@@ -20,7 +20,7 @@ if [ -e $CONFIGFILE ]; then
 fi
 
 echo " +++ getting request token.."
-$OAUTHSIGN -X -f $TOKENFILE -w -e -c $CONKEY -C $CONSEC "${BASEURL}${DOPARAM}${RQT}"
+$OAUTHSIGN -X -f $TOKENFILE -w -e -c $CONKEY -C $CONSEC "${BASEURL}${DOPARAM}${RQT}" || ( echo "no request token returned."; exit 1;) || exit 1;
 
 if [ -n "$AUT" ]; then
   REQTOK=$(cat $TOKENFILE | awk '/oauth_token_key=(.*)/{ print substr($1,17);}')
@@ -31,7 +31,7 @@ if [ -n "$AUT" ]; then
 fi
 
 echo " +++ exchanging request token for access token"
-$OAUTHSIGN -X -f $TOKENFILE -w "${BASEURL}${DOPARAM}${ACT}" || ( echo "token exchange failed"; exit 1;) || exit 1;
+$OAUTHSIGN -X -f $TOKENFILE -w "${BASEURL}${DOPARAM}${ACT}" --quiet || ( echo "token exchange failed"; exit 1;) || exit 1;
 
 echo " +++ making test request.."
 $OAUTHSIGN -x -f $TOKENFILE "${BASEURL}${TST}"

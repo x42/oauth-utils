@@ -18,6 +18,7 @@ MAINTAINERCLEANFILES = \
  depcomp \
  install-sh \
  Makefile.in \
+ INSTALL \
  missing
 
 CLEANFILES = 

@@ -63,8 +63,8 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit4 (16) : -B base-url and exit
                       //  bit5 (32) :  print secrets along with base-string(8)
                       //  bit6 (64) :  print signature after generating it. (unless want_verbose is set: it's printed anyway)
-                      //  bit7 (128):  
-                      //  bit8 (256): parse reply (request token, access token)
+                      //  bit7 (128):  escape POST parameters with format_array(..)
+                      //  bit8 (256):  parse reply (request token, access token)
                       //  bit9 (512): 
                       //
 int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
@@ -153,7 +153,7 @@ static int decode_switches (int argc, char **argv) {
 			   "F:" /* set key/data filename */
 			   "w" 	/* write to key/data file, save request/access token state */
 			   "x" 	/* execute */
-			   "X",	/* execute and parse reply (TODO: link with '-w' ?!) */
+			   "X",	/* execute and parse reply */
 			   long_options, (int *) 0)) != EOF) {
     switch (c) {
       case 'q':		/* --quiet, --silent */
@@ -274,6 +274,19 @@ Options:\n\
   -e, --erase-token           clear [access|request] token settings.\n\
   -E, --erase-all             wipe [access|request] and consumer token settings.\n\
   \n\
+  The position of parameters -d, -f, -F, -e, -E and all tokens matters!\n\
+  \n\
+  Tokens are read from file at the moment the -f option is parsed overriding \n\
+  the current value(s). eg.\n\
+    '-f config.txt -e -C secret -F out.txt -w' reads the settings from file,\n\
+  then deletes the access/request tokens and finally overrides the consumer-\n\
+  secret. Only the consumer-key will be left from the file which is saved\n\
+  to out.txt along with the new secret\n\
+  \n\
+  The request URL is constructed by first parsing all query-parameters from\n\
+  the URL; then -d parameters are added, and finally oauth_XXX params \n\
+  appended.\n\
+  \n\
 "));
   exit (status);
 }
@@ -282,10 +295,17 @@ Options:\n\
 int main (int argc, char **argv) {
   int i;
   int exitval=0;
+  int oaargc =0;
+  char **oaargv= NULL;
+  char *sign = NULL;
+
+  // initialize 
 
   program_name = argv[0];
   memset(&op,0,sizeof(oauthparam));
   reset_oauth_param(&op);
+
+  // parse command line
 
   i = decode_switches (argc, argv);
 
@@ -299,29 +319,22 @@ int main (int argc, char **argv) {
   if (argc>i) 
       usage(EXIT_FAILURE);
 
+  // check settings 
+
   if (!op.c_key || strlen(op.c_key)<1) {
-    fprintf(stderr, "Error: consumer key not set\n");
+    fprintf(stderr, "Error: consumer key not set.\n");
     exit(1);
   }
 
-  // TODO:
-  // error if  "-w" and no file-name "-f" or "-F"
-  // warning if "-w" no actual request performed... "-x", "-X"
-
+  if (want_write && !datafile || strlen(datafile)<1) {
+    want_write=0;
+    fprintf(stderr, "WARNING: no filename given. use -F or -f.\n");
+  }
 
   // do the work.
-  #if 0
-  printf ("debug: ck=%s\n",op.c_key);
-  printf ("debug: cs=%s\n",op.c_secret);
-  printf ("debug: tk=%s\n",op.t_key);
-  printf ("debug: ts=%s\n",op.t_secret);
-  #endif
  
   if (want_write && !want_dry_run) save_keyfile(datafile, &op); // save current state
   
-  int oaargc =0;
-  char **oaargv= NULL;
-  char *sign;
   sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
 
   if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
@@ -332,20 +345,11 @@ int main (int argc, char **argv) {
       free(sign);
     }
     format_array(mode, oaargc, oaargv);
-  } else { // request=mode 
-    //
-    // oauthrequest(mode&2, &op);
-    // work in progres: 
-    // split this up - don't use oauthrequest() - walk thru oauthsign_ext() 
-    // make the request, parse and save.. or output if not quiet.
-    // LATER: provide a dedicated standalone executables that does a direct 
-    // POST, GET request alike current oauthrequest() without all the 
-    // '-b', '-B' options. - eg. oauthrawpost, oauthget etc.
+  } else { // request_mode 
     char *reply;
-    //
     if (!sign) { 
-      // TODO: error
-      exitval|=1;
+      if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not generate oAuth signature.\n");
+      exitval|=8;
     }
     if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
 
@@ -359,7 +363,7 @@ int main (int argc, char **argv) {
     }
 
     if (!reply) { 
-      ; // TODO: error
+      if (!exitval || want_verbose) fprintf(stderr,"ERROR: no reply from HTTP request.\n");
       exitval|=2;
     } else if (want_verbose || (mode&128)==0) {
       if(want_verbose) printf("------HTTP reply------\n");
@@ -370,7 +374,7 @@ int main (int argc, char **argv) {
     if (mode&128) {
       reset_oauth_token(&op);
       if (parse_reply(reply, &(op.t_key), &(op.t_secret))) { 
-        // TODO: error
+        if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not parse reply.\n");
         exitval|=4;
       } else if (!want_quiet) {
         printf ("token=%s\n",op.t_key);
@@ -384,8 +388,8 @@ int main (int argc, char **argv) {
  
   if (exitval==0 && want_write && !want_dry_run) save_keyfile(datafile, &op); // save final state
 
-  // TODO free oaargv and oauth_argv arrays..
-
+  free_array(oaargc, oaargv);
+  free_array(oauth_argc, oauth_argv);
   return (exitval);
 }
 
