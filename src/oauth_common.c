@@ -34,6 +34,39 @@ extern int want_quiet;
 extern int want_verbose;
 
 
+int oauthrequest (int mode, oauthparam *op) {
+  if (mode&2==0) { // GET
+    char *geturl = NULL;
+    geturl = oauth_sign_url(op->url, NULL, OA_HMAC, op->c_key, op->c_secret, op->t_key, op->t_secret);
+    if(!geturl) {
+    	return (1);
+    }
+    //printf("%s\n", geturl);
+    char *reply = oauth_http_get(geturl, NULL);
+    if(reply){
+      //write(STDOUT, reply, strlen(reply))
+      printf("%s\n", reply);
+      free(reply);
+    }
+    free(geturl);
+  } else { // POST
+    char *postargs = NULL, *post = NULL;
+    post = oauth_sign_url(op->url, &postargs, OA_HMAC, op->c_key, op->c_secret, op->t_key, op->t_secret);
+    if (!post || !postargs) {
+    	return (1);
+    }
+    char *reply = oauth_http_post(post,postargs);
+    if(reply){
+      //write(STDOUT, reply, strlen(reply))
+      printf("%s\n", reply);
+      free(reply);
+    }
+    if(post) free(post);
+    if(postargs) free(postargs);
+  }
+  return (0);
+}
+
 int oauthsign_alt (int mode, oauthparam *op) {
   if (mode==1) { // GET
     char *geturl = NULL;
@@ -170,47 +203,72 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
   return sign; // needs to be free()d
 }
 
-int oauthsign (int mode, oauthparam *op) {
-  int argc;
-  char **argv = NULL;
-  url_to_array(&argc, &argv, mode, op->url);
-
+void add_oauth_params_to_array (int *argcp, char ***argvp, oauthparam *op) {
   char *tmp;
-  // add oAuth arguments
-	if (!oauth_param_exists(argv,argc,"oauth_nonce")) {
-    add_kv_to_array(&argc, &argv, "oauth_nonce", (tmp=oauth_gen_nonce()));
+  add_kv_to_array(argcp, argvp, "oauth_consumer_key", op->c_key);
+
+	if (!oauth_param_exists(*argvp,*argcp,"oauth_nonce")) {
+    add_kv_to_array(argcp, argvp, "oauth_nonce", (tmp=oauth_gen_nonce()));
 		free(tmp);
 	}
 
-	if (!oauth_param_exists(argv,argc,"oauth_timestamp")) {
+	if (!oauth_param_exists(*argvp,*argcp,"oauth_timestamp")) {
     char tmp2[128];
 		snprintf(tmp2, 128, "%li", time(NULL));
-    add_kv_to_array(&argc, &argv, "oauth_timestamp", tmp2);
+    add_kv_to_array(argcp, argvp, "oauth_timestamp", tmp2);
 	}
 
 	if (op->t_key) {
-    add_kv_to_array(&argc, &argv, "oauth_token", op->t_key);
+    add_kv_to_array(argcp, argvp, "oauth_token", op->t_key);
   }
 
-  add_kv_to_array(&argc, &argv, "oauth_consumer_key", op->c_key);
-  add_kv_to_array(&argc, &argv, "oauth_signature_method", op->signature_method==OA_HMAC?"HMAC-SHA1":op->signature_method==OA_RSA?"RSA-SHA1":"PLAINTEXT");
-	if (!oauth_param_exists(argv,argc,"oauth_version")) {
-    add_kv_to_array(&argc, &argv, "oauth_version", "1.0");
+  add_kv_to_array(argcp, argvp, "oauth_signature_method", op->signature_method==OA_HMAC?"HMAC-SHA1":op->signature_method==OA_RSA?"RSA-SHA1":"PLAINTEXT");
+	if (!oauth_param_exists(*argvp,*argcp,"oauth_version")) {
+    add_kv_to_array(argcp, argvp, "oauth_version", "1.0");
   }
+}
 
+// basically oauth_sign_url() from liboauth in steps..
+int oauthsign (int mode, oauthparam *op) {
+  int argc=0;
+  char **argv = NULL;
   char *sign=NULL;
-  if ((sign=process_array(argc, argv, mode, op))) { 
+
+  url_to_array(&argc, &argv, mode, op->url);
+
+  add_oauth_params_to_array(&argc, &argv, op);
+
+  sign=process_array(argc, argv, mode, op);
+
+  if (sign) {
     add_kv_to_array(&argc, &argv, "oauth_signature", sign);
     free(sign);
   }
 
-  // array to url() 
+#if 0
+  // array to url()  - raw parameters (not escaped but sorted)
+  int i=0;
+  printf("%s?", argv[i]);
+  while(++i<argc) {
+    printf("%s", argv[i]);
+    free(argv[i]);
+    if (i+1<argc)printf("&");
+  }
+  printf("\n");
+#else
+  // array to url()  - escape parameters
   char *result; 
   result = oauth_serialize_url(argc, (mode&2?1:0), argv);
-  printf("%s\n", result); // XXX post/get..
-  free(result);
 
-  return (0);
+  if (mode&2) { // TODO assert(argc>0) !!
+    printf("%s\n\n", argv[0]);  // POST
+    free(argv[0]);
+  }
+  printf("%s\n", result); 
+  if (argv) free(argv);
+  free (result); // TODO return (result);
+#endif
+  return(0);
 }
 
 /* vim: set sw=2 ts=2 sts=2 et : */

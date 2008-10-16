@@ -61,6 +61,10 @@ char *c_secret = NULL; //< consumer secret
 char *t_key = NULL;    //< token key
 char *t_secret = NULL; //< token secret
 int mode = 1;          //< mode: 0=GET 1=POST
+int request_mode = 0;  //< mode: 0=GET 1=POST
+
+int   oauth_argc = 0;
+char *oauth_argv = NULL;
 
 static struct option const long_options[] =
 {
@@ -80,11 +84,14 @@ static struct option const long_options[] =
   {"TK", required_argument, 0, 't'},
   {"TS", required_argument, 0, 'T'},
 
+
   {"request", required_argument, 0, 'r'},
   {"post", no_argument, 0, 'p'},
   
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
+
+  {"data", required_argument, 0, 'd'},
 
 //{"method", no_argument, 0, 'm'}, // oauth signature method
 
@@ -113,7 +120,9 @@ static int decode_switches (int argc, char **argv) {
 			   "r:" 	/* request */
 			   "p" 	/* post */
 			   "B" 	/* base-URL*/
-			   "b",	/* base-string*/
+			   "b" 	/* base-string*/
+			   "d" 	/* data */
+			   "x",	/* execute */
 			   long_options, (int *) 0)) != EOF) {
       switch (c) {
 	case 'q':		/* --quiet, --silent */
@@ -164,6 +173,12 @@ static int decode_switches (int argc, char **argv) {
 	case 'C':
     if (t_secret) free(t_secret);
     t_secret=xstrdup(optarg); 
+    break;
+	case 'd': // XXX
+    add_param_to_array(&oauth_argc, &oauth_argv,optarg);
+    break;
+	case 'x':
+    request_mode=1;
     break;
 	case 'h':
 	  usage (0);
@@ -231,7 +246,17 @@ int main (int argc, char **argv) {
   op.t_key=t_key;
   op.t_secret=t_secret;
 
-  oauthsign(mode, &op);
+  if (oauth_argc>0) {
+    ;
+  }
+
+  if(request_mode) {
+    oauthrequest(mode, &op);
+    // parese and save..
+  }
+  else 
+    oauthsign(mode, &op);
+
   //oauthsign_alt(mode&3, &op);
   exit (0);
 }
