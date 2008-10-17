@@ -22,7 +22,8 @@ DOPARAM=""
 RQT="request_token.php"
 ACT="access_token.php"
 #AUT="authenticate.php?"
-TST="echo_api.php?method=foo%20bar&bar=baz"
+TST="echo_api.php"
+TSQ="?method=foo%20bar&bar=baz"
 
 # read config file - override above settings
 if [ -e $CONFIGFILE ]; then
@@ -56,9 +57,9 @@ echo " +++ exchanging request token for access token"
 $OAUTHSIGN -X -f $TOKENFILE -w "${BASEURL}${DOPARAM}${ACT}" --quiet || ( echo " !!! token exchange failed"; exit 1;) || exit 1;
 
 echo " +++ making test request.."
-$OAUTHSIGN -x -f $TOKENFILE "${BASEURL}${TST}" || ( echo " !!! test request failed"; exit 1;) || exit 1
+$OAUTHSIGN -x -f $TOKENFILE "${BASEURL}${TST}${TSQ}" || ( echo " !!! test request failed"; exit 1;) || exit 1
 
-echo " +++ and another one" 
-$OAUTHSIGN -x -f $TOKENFILE -d "method=foo%&bar" -d "bar=foo bar" --post "${BASEURL}echo_api.php" || ( echo " !!! test request failed"; exit 1;) || exit 1
+#echo " +++ and another one with parameter-arrays" 
+#$OAUTHSIGN -x -f $TOKENFILE -d "foo=bar bar" -d 'bar[1]=foo&%bar' -d 'bar[0]=bar#+b a r' --post "${BASEURL}${TST}" || ( echo " !!! test request failed"; exit 1;) || exit 1
 
 exit 0

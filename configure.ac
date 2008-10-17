@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([oauth-utils], [0.1.3], [robin AT gareus DOT org])
+AC_INIT([oauth-utils], [0.1.4], [robin AT gareus DOT org])
 AC_CONFIG_SRCDIR(src/oauthsign.c)
 
 AC_CANONICAL_TARGET([])

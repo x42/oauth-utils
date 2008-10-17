@@ -1,3 +1,7 @@
+oauth-utils (0.1.4-1) unstable; urgency=low
+  * new upstream release
+ -- Robin Gareus <robin@gareus.org>  Fri, 17 Oct 2008 13:04:24 +0200
+
 oauth-utils (0.1.3-1) unstable; urgency=low
 
   * Initial release 
