@@ -27,8 +27,11 @@ CROSS= --build $(DEB_BUILD_GNU_TYPE)
 endif
 
 
-
-
+configure:
+	aclocal 
+	automake --gnu --add-missing --copy
+	autoheader 
+	autoconf 
 
 config.status: configure
 	dh_testdir
