@@ -35,7 +35,7 @@ extern int want_verbose;
 
 int parse_oauth_method(oauthparam *op, char *value) {
     if (!strcmp(value, "PLAINTEXT")) {
-      op->signature_method = OA_RSA;
+      op->signature_method = OA_PLAINTEXT;
       return (0);
     } else if (!strcmp(value, "RSA-SHA1")) {
       op->signature_method = OA_RSA;
@@ -219,7 +219,7 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
 
   switch(op->signature_method) {
     case OA_RSA:
-      sign = oauth_sign_rsa_sha1(odat,okey);
+      sign = oauth_sign_rsa_sha1(odat,op->c_secret); // XXX don't re-use consumer-key; allow to read from file.
     	break;
     case OA_PLAINTEXT:
       sign = oauth_sign_plaintext(odat,okey);
@@ -286,6 +286,17 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int 
 #endif
 }
 
+void format_array_curl(int mode, int argc, char **argv) {
+  if (argc<1 || !argv) return;
+  printf("curl %s \\\n", mode&2?"":"-G");
+  int i=1;
+  while(i<argc) {
+    printf(" -d '%s' \\\n", argv[i]);
+    i++;
+  }
+  printf(" '%s'\n", argv[0]);
+}
+
 void array_format_raw(int argc, int start, char **argv, char *sep) {
     // array to url()  - raw parameters (not escaped)
     int i=start;
@@ -301,6 +312,11 @@ void array_format_raw(int argc, int start, char **argv, char *sep) {
 
 void format_array(int mode, int argc, char **argv) {
   if (argc<1 || !argv) return;
+
+  if (mode&512) {
+    format_array_curl(mode, argc, argv);
+    return;
+  }
 
   if (mode&2) { // POST
     printf("%s\n\n", argv[0]);

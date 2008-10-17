@@ -47,6 +47,7 @@ char *program_name;
 /* getopt_long return codes */
 enum {DUMMY_CODE=129
       ,DRYRUN_CODE
+      ,CURLOUT_CODE
 };
 
 /* Option flags and variables */
@@ -65,7 +66,7 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit6 (64) :  print signature after generating it. (unless want_verbose is set: it's printed anyway)
                       //  bit7 (128):  parse reply (request token, access token)
                       //  bit8 (256):  escape POST parameters with format_array(..)
-                      //  bit9 (512): 
+                      //  bit9 (512):  curl-output
                       //
 int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
 
@@ -96,7 +97,8 @@ static struct option const long_options[] =
 
   {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
   {"post", no_argument, 0, 'p'},
-//{"escape-post-param", no_argument, 0, 'P'},
+//{"escape-post-param", no_argument, 0, 'P'}, // TODO: rename ''--print-escaped''
+  {"curl", no_argument, 0, CURLOUT_CODE}, // TODO: rename '--print-curl'
   {"data", required_argument, 0, 'd'},
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
@@ -167,6 +169,9 @@ static int decode_switches (int argc, char **argv) {
         break;
       case DRYRUN_CODE:	/* --dry-run */
         want_dry_run = 1;
+        break;
+      case CURLOUT_CODE:	/* --curl */
+        mode|= 512;
         break;
       case 'V':
         printf ("%s %s (%s)", PACKAGE, VERSION, OS);
@@ -270,13 +275,16 @@ Options:\n\
   \n\
   -b, --base-string           print OAuth base-string and exit\n\
   -B, --base-url              print OAuth base-URL and exit\n\
+"/*
+  --curl                      format output as `curl` commandline\n\
+*/"\
   -r, --request               HTTP request type (POST, GET [default])\n\
   -p, --post                  same as -r POST\n\
   -d, --data <key>[=<val>]    add url query parameters.\n\
   -m, --signature-method      oauth signature method (PLAINTEXT,\n\
                               RSA-SHA1, HMAC-SHA1 [default])\n\
 "/*
-  -P,                         URL escape POST parameters \n\ 
+  -P,                         print URL-escaped POST parameters\n\ 
 */"\
   \n\
   -c, --CK, --consumer-key    <text> \n\

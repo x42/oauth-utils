@@ -36,24 +36,59 @@ char *xstrdup ();
 extern int want_quiet;
 extern int want_verbose;
 
+
+// based on curl_easy_unescape from libcurl .. move to liboauth ?!
+#include <ctype.h>
+#define ISXDIGIT(x) (isxdigit((int) ((unsigned char)x)))
+char *url_unescape_len(const char *string, int *olen) {
+  int alloc = (int)strlen(string)+1;
+  char *ns = xmalloc(alloc);
+  unsigned char in;
+  int strindex=0;
+  long hex;
+
+  while(--alloc > 0) {
+    in = *string;
+    if(('%' == in) && ISXDIGIT(string[1]) && ISXDIGIT(string[2])) {
+      char hexstr[3]; // '%XX'
+      hexstr[0] = string[1];
+      hexstr[1] = string[2];
+      hexstr[2] = 0;
+      hex = strtol(hexstr, NULL, 16);
+      in = (unsigned char)hex; /* hex is always < 256 */
+      string+=2;
+      alloc-=2;
+    }
+    ns[strindex++] = in;
+    string++;
+  }
+  ns[strindex]=0;
+  if(olen) *olen = strindex;
+  return ns;
+}
+
+char *url_unescape(const char *string) {
+  return url_unescape_len(string, NULL);
+}
+
 int parseoption (oauthparam *op, char *item, char *value) {
   int rv =0;
   if      (!strncasecmp(item,"oauth_consumer_key",18)) {
     if(op->c_key) free(op->c_key);
-    op->c_key=xstrdup(value); 
+    op->c_key=url_unescape(value); 
     if (strlen(value)>0) rv|=1;
   }
   else if (!strncasecmp(item,"oauth_consumer_secret",21)) {
     if(op->c_secret) free(op->c_secret);
-    op->c_secret=xstrdup(value); rv|=1;
+    op->c_secret=url_unescape(value); rv|=1;
   }
   else if (!strncasecmp(item,"oauth_token_key",15)) {
     if(op->t_key) free(op->t_key);
-    op->t_key=xstrdup(value); rv|=1;
+    op->t_key=url_unescape(value); rv|=1;
   }
   else if (!strncasecmp(item,"oauth_token_secret",18)) {
     if(op->t_secret) free(op->t_secret);
-    op->t_secret=xstrdup(value); rv|=1;
+    op->t_secret=url_unescape(value); rv|=1;
   }
   else if (!strncasecmp(item,"oauth_signature_method",22)) {
     if (!parse_oauth_method(op, value)) rv|=1;
@@ -97,12 +132,17 @@ int read_keyfile(char *fn, oauthparam *op) {
 
 int save_keyfile(char *fn, oauthparam *op) {
   char sep = '\n'; // '&'
+  char *tmp=NULL;
   FILE *f = fopen(fn, "w");
   if (!f) return -1;
-  if(op->c_key) fprintf(f,"oauth_consumer_key=%s%c", op->c_key, sep);
-  if(op->c_secret) fprintf(f,"oauth_consumer_secret=%s%c", op->c_secret, sep);
-  if(op->t_key) fprintf(f,"oauth_token_key=%s%c", op->t_key, sep);
-  if(op->t_secret) fprintf(f,"oauth_token_secret=%s%c", op->t_secret, sep);
+  if(op->c_key) fprintf(f,"oauth_consumer_key=%s%c", (tmp=oauth_url_escape(op->c_key)), sep);
+  if (tmp) { free(tmp); tmp=NULL;}
+  if(op->c_secret) fprintf(f,"oauth_consumer_secret=%s%c", (tmp=oauth_url_escape(op->c_secret)), sep);
+  if (tmp) { free(tmp); tmp=NULL;}
+  if(op->t_key) fprintf(f,"oauth_token_key=%s%c", (tmp=oauth_url_escape(op->t_key)), sep);
+  if (tmp) { free(tmp); tmp=NULL;}
+  if(op->t_secret) fprintf(f,"oauth_token_secret=%s%c", (tmp=oauth_url_escape(op->t_secret)), sep);
+  if (tmp) { free(tmp); tmp=NULL;}
   switch(op->signature_method) {
     case OA_RSA:
       fprintf(f,"oauth_signature_method=%s%c", "RSA-SHA1", sep);

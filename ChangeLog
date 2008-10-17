@@ -1,3 +1,9 @@
+2008-10-17  Robin Gareus  <robin@gareus.org>
+	* version 0.2.0
+	* escape parameters when saving keyfile
+	* added curl commandline output
+	* reading SHA1-key from consumer-secret :(
+
 2008-10-16  Robin Gareus  <robin@gareus.org>
 	* version 0.1.5
 	* fixed segfault on filename-check.
