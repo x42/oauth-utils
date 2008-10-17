@@ -17,7 +17,7 @@ MAINTAINERCLEANFILES = \
  aclocal.m4 \
  compile \
  config.guess \
- config.h.in \
+ src/config.h.in \
  config.sub \
  configure \
  depcomp \
