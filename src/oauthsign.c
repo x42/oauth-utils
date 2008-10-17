@@ -284,11 +284,13 @@ Options:\n\
   The position of parameters -d, -f, -F, -e, -E and all tokens matters!\n\
   \n\
   Tokens are read from file at the moment the -f option is parsed overriding \n\
-  the current value(s). eg.\n\
+  the current value(s). Optional trailing key/secret params are parsed last.\n\
+  eg.\n\
     '-f config.txt -e -C secret -F out.txt -w' reads the settings from file,\n\
   then deletes the access/request tokens and finally overrides the consumer-\n\
-  secret. Only the consumer-key will be left from the file which is saved\n\
-  to out.txt along with the new secret\n\
+  secret. Only the consumer-key is left from config.txt and will be saved \n\
+  to out.txt along with the new secret. If -X is given and the HTTP request\n\
+  succeeds, the received token and secret will be stored as well.\n\
   \n\
   The request URL is constructed by first parsing all query-parameters from\n\
   the URL; then -d parameters are added, and finally oauth_XYZ params \n\
