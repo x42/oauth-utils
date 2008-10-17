@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CONFIGFILE=${1:-"./oauthconf"}
+
 OAUTHSIGN=./src/oauthsign
 if ! test -x $OAUTHSIGN; then
   OAUTHSIGN=../src/oauthsign
@@ -23,10 +25,12 @@ ACT="access_token.php"
 TST="echo_api.php?method=foo%20bar&bar=baz"
 
 # read config file - override above settings
-CONFIGFILE="./oauthconf"
 if [ -e $CONFIGFILE ]; then
  . $CONFIGFILE
 fi
+
+echo " --- oauthsign test and example"
+echo " --- connecting to $BASEURL"
 
 TOKENFILE=`mktemp /tmp/oauth.XXXXXXXXXX` || exit 1
 
@@ -36,12 +40,14 @@ function cleanup {
 trap cleanup EXIT
 
 echo " +++ getting request token.."
-$OAUTHSIGN -X -f $TOKENFILE -w -e -c $CONKEY -C $CONSEC "${BASEURL}${DOPARAM}${RQT}" || ( echo " !!! no request token returned."; exit 1;) || exit 1;
+#echo " --- URL: ${BASEURL}${DOPARAM}${RQT}"
+$OAUTHSIGN -X -f $TOKENFILE -w -e -c "$CONKEY" -C "$CONSEC" "${BASEURL}${DOPARAM}${RQT}" || ( echo " !!! no request token returned."; exit 1;) || exit 1;
 
 if [ -n "$AUT" ]; then
   REQTOK=$(cat $TOKENFILE | awk '/oauth_token_key=(.*)/{ print substr($1,17);}')
+  echo " +++ Authorization."
   echo "visit: ${BASEURL}${DOPARAM}${AUT}&oauth_token=${REQTOK}"
-  echo -n "Authorize request token and press enter.."
+  echo -n "to authorize this request token and press enter.."
   read 
   echo 
 fi

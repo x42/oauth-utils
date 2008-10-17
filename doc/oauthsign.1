@@ -1,0 +1,105 @@
+.\"                              hey, Emacs:   -*- nroff -*-
+.\" oauth-utils is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; see the file COPYING.  If not, write to
+.\" the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+.\"
+.TH OAUTHSIGN 1 "October 16, 2008"
+.\" Please update the above date whenever this man page is modified.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins (default)
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.\"
+.\" defines for verbose text
+.de Vb \" Begin verbatim text
+.ft CW
+.nf
+.ne \\$1
+..
+.de Ve \" End verbatim text
+.ft R
+.fi
+..
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+
+.SH NAME
+oauthsign \- oauth command line tool
+.SH SYNOPSIS
+.B oauthsign
+.RI [ options ]
+.RI < URL >
+.RI [ CKey ]
+.RI [ CSec ]
+.RI [ TKey ]
+.RI [ Tsec ]
+.SH DESCRIPTION
+\fBoauthsign\fP offers a simple way to generate or make OAuth signed HTTP requests.
+.PP
+\fBoauthsign\fP implements an OAuth consumer...
+.SH OPTIONS
+\fBoauthsign\fP accepts the following options:
+.TP
+.B  --dry-run
+Take no real actions.
+.TP
+.B  --no-warn
+Disable warnings.
+.TP
+.BR  -q , " --quiet" , " --silent"
+Inhibit usual output.
+.TP
+.B  -v, --verbose
+Print more information.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-V, \-\-version
+Show version of program.
+.TP
+.B ... 
+for all options, run
+.PP
+.Vb 1
+\&        oauthsign \-h 
+.Ve
+.SH EXAMPLE
+run the following commands in sequence to walk though an
+.URL "http://term.ie/oauth/example/" "OAuth example".
+Connecting to the server requires online connectivity. The file \fI/tmp/test.oaf\fP is used to store the OAuth tokens between the requests.
+
+.PP
+.Vb 1
+\&oauthsign \-X \-f /tmp/test.oaf \-w \-e \-c key \-C secret http://term.ie/oauth/example/request_token.php
+\&oauthsign \-X \-f /tmp/test.oaf \-w http://term.ie/oauth/example/access_token.php
+\&oauthsign \-x \-f /tmp/test.oaf "http://term.ie/oauth/example/echo_api.php?method=foo%20bar&bar=baz"
+\&oauthsign \-x \-f /tmp/test.oaf \-d method=foo%20bar \-d "bar=baz &test%" \-\-post http://term.ie/oauth/example/echo_api.php
+.Ve
+
+.SH "SEE ALSO"
+.BR oauth-utils (7).
+.SH AUTHOR
+oauth-utils was written by Robin Gareus <robin@gareus.org>.
+.PP
+This manual page was also written by Robin Gareus <robin@gareus.org>,
+for the Debian project (but may be used by others).
+

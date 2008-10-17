@@ -1,21 +1,19 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(oauthsign.c)
+AC_INIT([oauth-utils], [0.1.3], [robin AT gareus DOT org])
 AC_CONFIG_SRCDIR(src/oauthsign.c)
 
-dnl Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(oauth_utils, 0.1.2)
+AC_CANONICAL_TARGET([])
+AC_COPYRIGHT([Copyright (C) Robin Gareus 2008])
 
-dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
-AM_CONFIG_HEADER(config.h)
-
+AM_INIT_AUTOMAKE(oauth-utils, $PACKAGE_VERSION)
+AM_CONFIG_HEADER(src/config.h)
 AC_SUBST(VERSION)
-
-dnl used for lsm.in
 ISODATE=`date +%Y-%m-%d`
 AC_SUBST(ISODATE)
 
 AC_CANONICAL_HOST
+AC_DEFINE_UNQUOTED(OS, "${host}", [cpu-machine-OS])
 
 dnl Checks for programs.
 AC_PROG_INSTALL
@@ -48,4 +46,4 @@ PKG_CHECK_MODULES(OAUTH, oauth, HAVE_OAUTH=yes,
 	point the path where liboauth installed it's .pc files.
 	])) 
 
-AC_OUTPUT(Makefile src/Makefile oauth_utils.lsm oauth_utils.spec)
+AC_OUTPUT(Makefile src/Makefile oauth-utils.lsm oauth-utils.spec)

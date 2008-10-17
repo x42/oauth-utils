@@ -1,8 +1,8 @@
-# oauth_utils.spec
+# oauth-utils.spec
 #
 # Copyright (c) 2008 Robin Gareus robin@gareus.org
 #
-%define name oauth_utils
+%define name oauth-utils
 %define version @VERSION@
 %define release 1
 %define manifest %{_builddir}/%{name}-%{version}-%{release}.manifest
@@ -41,9 +41,7 @@ Summary: command line utilities for oauth
 %description
 command line utilities for oauth
 @configure_input@
-Please edit oauth_utils.spec.in to add several more lines of description
-here if appropriate, and to delete these instructions.
-
+a command line oAuth consumer.
 %prep
 %setup -q
 #%patch0 -p1

@@ -92,21 +92,17 @@ static struct option const long_options[] =
   {"CS", required_argument, 0, 'C'},
   {"TK", required_argument, 0, 't'},
   {"TS", required_argument, 0, 'T'},
+  {"signature-method", no_argument, 0, 'm'}, //  oauth signature method
 
-
-  {"request", required_argument, 0, 'r'},
+  {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
   {"post", no_argument, 0, 'p'},
 //{"escape-post-param", no_argument, 0, 'P'},
-  
+  {"data", required_argument, 0, 'd'},
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
 
-  {"data", required_argument, 0, 'd'},
-
-//{"method", no_argument, 0, 'm'}, // TODO - oauth signature method
-
   {"file", required_argument, 0, 'f'},
-  {"write", no_argument, 0, 'w'},  // only if '-f' given.
+  {"write", no_argument, 0, 'w'}, 
 //{"writefile", required_argument, 0, 'F'}, 
 //{"execute", no_argument, 0, 'x'}, 
 //{"oauthrequest", no_argument, 0, 'X'}, 
@@ -136,28 +132,31 @@ static int decode_switches (int argc, char **argv) {
   int c;
 
   while ((c = getopt_long (argc, argv, 
-			   "q"	/* quiet or silent */
-			   "v"	/* verbose */
 			   "h"	/* help */
 			   "V" 	/* version */
+			   "q"	/* quiet or silent */
+			   "v"	/* verbose */
+			   "b"  /* base-string*/
+			   "B"  /* base-URL*/
+			   "r:" /* HTTP Request method */
+			   "p" 	/* post */
+			   "d:" /* URL-query parameter data eg.
+               * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
+			   "m:" /* oauth signature Method */
+			   "P" 	/* print escaped post parameters */
+
 			   "c:" /* consumer-key*/
 			   "C:" /* consumer-secret */
 			   "t:" /* token-key*/
 			   "T:" /* token-secret */
-			   "r:" /* request */
-			   "e"  /* erase token */
-			   "E"  /* erase token and conusmer */
-			   "p" 	/* post */
-			   "P" 	/* print escaped post parameters */
-			   "B"  /* base-URL*/
-			   "b"  /* base-string*/
-			   "d:" /* URL-query parameter data eg.
-               * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
+
 			   "f:" /* read key/data file */
-			   "F:" /* set key/data filename */
 			   "w" 	/* write to key/data file, save request/access token state */
+			   "F:" /* set key/data filename */
 			   "x" 	/* execute */
-			   "X",	/* execute and parse reply */
+			   "X" 	/* execute and parse reply */
+			   "e"  /* erase token */
+			   "E", /* erase token and conusmer */
 			   long_options, (int *) 0)) != EOF) {
     switch (c) {
       case 'q':		/* --quiet, --silent */
@@ -170,7 +169,11 @@ static int decode_switches (int argc, char **argv) {
         want_dry_run = 1;
         break;
       case 'V':
-        printf ("oauth_urils %s\n", VERSION);
+        printf ("%s %s (%s)", PACKAGE, VERSION, OS);
+        #ifdef LIBOAUTH_VERSION
+        printf (" liboauth/%s", LIBOAUTH_VERSION);
+        #endif
+        printf ("\n");
         exit (0);
 
       case 'b':
@@ -238,6 +241,9 @@ static int decode_switches (int argc, char **argv) {
       case 'P':
         mode|=256;
         break;
+      case 'm':
+        if (parse_oauth_method(&op, optarg)) usage(1);
+        break;
       case 'h':
         usage (0);
 
@@ -261,25 +267,32 @@ Options:\n\
   -V, --version               output version information and exit\n\
   -q, --quiet, --silent       inhibit usual output\n\
   -v, --verbose               print more information\n\
+  \n\
   -b, --base-string           print OAuth base-string and exit\n\
   -B, --base-url              print OAuth base-URL and exit\n\
-  -r, --request               HTTP request type (POST, GET)\n\
+  -r, --request               HTTP request type (POST, GET [default])\n\
   -p, --post                  same as -r POST\n\
   -d, --data <key>[=<val>]    add url query parameters.\n\
+  -m, --signature-method      oauth signature method (PLAINTEXT,\n\
+                              RSA-SHA1, HMAC-SHA1 [default])\n\
+"/*
+  -P,                         URL escape POST parameters \n\ 
+*/"\
   \n\
-  -c, --CK, --consumer-key     <text>\n\
-  -C, --CS, --consumer-secret  <text> \n\
-  -t, --TK, --token-key        <text> \n\
-  -T, --TS, --token-secret     <text> \n\
+  -c, --CK, --consumer-key    <text> \n\
+  -C, --CS, --consumer-secret <text> \n\
+  -t, --TK, --token-key       <text> \n\
+  -T, --TS, --token-secret    <text> \n\
   \n\
   -f, --file <filename>       read tokens and secrets from config-file\n\
-  --dry-run                   take no real actions (with -x or -X)\n\
-  -x                          make HTTP request and return the replied content\n\
-  -X                          make HTTP request and parse the reply for tokens\n\
   -w                          write tokens to config-file\n\
   -F <filename>               set config-file name w/o reading the file.\n\
-  -e, --erase-token           clear [access|request] token settings.\n\
-  -E, --erase-all             wipe [access|request] and consumer token settings.\n\
+  -x                          make HTTP request and return the replied content\n\
+  -X                          make HTTP request and parse the reply for tokens\n\
+                              use '-X -w' to request and store tokens.\n\
+  -e, --erase-token           clear [access|request] tokens.\n\
+  -E, --erase-all             wipe all tokens and reset method to HMAC-SHA1.\n\
+  --dry-run                   take no real actions (with -x, -w or -X)\n\
   \n\
   The position of parameters -d, -f, -F, -e, -E and all tokens matters!\n\
   \n\

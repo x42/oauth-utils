@@ -1,0 +1,19 @@
+This package was debianized by Robin Gareus <robin@gareus.org> on
+Fri, 17 Oct 2008 11:02:39 +0200.
+
+It was downloaded from http://mir.dnsalias.com/_media/oss/oauth/oauth-utils-0.1.3.tar.gz
+
+Upstream Author(s):
+
+    Robin Gareus <robin@gareus.org>
+
+Copyright:
+
+    <Copyright (C) 2008 Robin gareus>
+
+License:
+
+    GPL v2 or later.
+
+The Debian packaging is (C) 2008, Robin Gareus <robin@gareus.org> and
+is licensed under the GPL, see `/usr/share/common-licenses/GPL'.

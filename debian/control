@@ -1,0 +1,15 @@
+Source: oauth-utils
+Section: web
+Priority: extra
+Maintainer: Robin Gareus <robin@gareus.org>
+Build-Depends: debhelper (>= 7), autotools-dev, liboauth-dev
+Standards-Version: 3.7.3
+Homepage: http://mir.dnsalias.com/oss/oauth/start
+
+Package: oauth-utils
+Architecture: any
+Depends: liboauth, ${shlibs:Depends}, ${misc:Depends}
+Recommends: curl
+Description: command line utilities for oauth
+ command line oAuth consumer in the style of curl
+ using liboauth.sf.net

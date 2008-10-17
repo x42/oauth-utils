@@ -40,7 +40,8 @@ int parseoption (oauthparam *op, char *item, char *value) {
   int rv =0;
   if      (!strncasecmp(item,"oauth_consumer_key",18)) {
     if(op->c_key) free(op->c_key);
-    op->c_key=xstrdup(value); rv|=1;
+    op->c_key=xstrdup(value); 
+    if (strlen(value)>0) rv|=1;
   }
   else if (!strncasecmp(item,"oauth_consumer_secret",21)) {
     if(op->c_secret) free(op->c_secret);
@@ -55,16 +56,7 @@ int parseoption (oauthparam *op, char *item, char *value) {
     op->t_secret=xstrdup(value); rv|=1;
   }
   else if (!strncasecmp(item,"oauth_signature_method",22)) {
-    if (!strcmp(value, "PLAINTEXT")) {
-      op->signature_method = OA_RSA;
-      rv|=1;
-    } else if (!strcmp(value, "RSA-SHA1")) {
-      op->signature_method = OA_RSA;
-      rv|=1;
-    } else if (!strcmp(value, "HMAC-SHA1")) {
-      op->signature_method = OA_HMAC; 
-      rv|=1;
-    }
+    if (!parse_oauth_method(op, value)) rv|=1;
   }
   return rv;
 }
@@ -90,9 +82,7 @@ int read_keyfile(char *fn, oauthparam *op) {
       item=strdup(token);
       token = strtok( NULL, "\t =&\n\r" ) ; 
       if (!token) {
-		    free(item);
-		    fprintf(stderr, "ERROR parsing config file. %s:%d\n",fn,lineno);
-		    exit(1);
+        token=xstrdup("");
       }	
       if (!parseoption(op,item,token)) {
         fprintf(stderr, "ERROR parsing config file. %s:%d\n",fn,lineno);

@@ -1,14 +1,12 @@
 Begin3
-Title:		oauth_utils
+Title:		oauth-utils
 Version:	@VERSION@
 Entered-date:	@ISODATE@
 Description:	command line utilities for oauth
 		@configure_input@
-		Please edit oauth_utils.lsm.in to fix the Keywords and
-		Primary-site entries, add several more lines of
-		description here if appropriate, and to delete these
-		instructions.
-Keywords:	[substitute your keywords here]
+		a command line oAuth consumer in the style of curl
+		using liboauth.sf.net
+Keywords:	oAuth, CLI
 Author: 	robin@gareus.org (Robin Gareus)
 Maintained-by:	robin@gareus.org (Robin Gareus)
 Primary-site:	metlab.unc.edu pub/Linux/apps/some/directory

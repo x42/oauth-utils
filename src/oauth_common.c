@@ -33,6 +33,20 @@
 extern int want_quiet;
 extern int want_verbose;
 
+int parse_oauth_method(oauthparam *op, char *value) {
+    if (!strcmp(value, "PLAINTEXT")) {
+      op->signature_method = OA_RSA;
+      return (0);
+    } else if (!strcmp(value, "RSA-SHA1")) {
+      op->signature_method = OA_RSA;
+      return (0);
+    } else if (!strcmp(value, "HMAC-SHA1")) {
+      op->signature_method = OA_HMAC; 
+      return (0);
+    }
+    return (-1);
+}
+
 #if 0 // obsolte
 int oauthrequest (int mode, oauthparam *op) {
   if (mode&2==0) { // GET
@@ -112,7 +126,7 @@ int parse_reply(const char *reply, char **token, char **secret) {
   rc = oauth_split_url_parameters(reply, &rv);
   //if (rc>0)
   qsort(rv, rc, sizeof(char *), oauth_cmpstringp);
-  if( rc==2 
+  if( rc>=2 
       && !strncmp(rv[0],"oauth_token=",11)
       && !strncmp(rv[1],"oauth_token_secret=",18) ) {
     ok=0;

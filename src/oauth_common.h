@@ -30,6 +30,7 @@ typedef struct {
 //char *request_method;   //< GET, POST, PUT, 
 } oauthparam;
 
+// common oauth functions
 char *oauthsign (int mode, oauthparam *op);
 char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int *saveargcp, char ***saveargvp);
 //int oauthsign_alt (int mode, oauthparam *op);
@@ -47,6 +48,9 @@ int url_to_array(int *argcp, char ***argvp, int mode, char *url);
 void add_param_to_array(int *argcp, char ***argvp, char *addparam);
 void add_kv_to_array(int *argcp, char ***argvp, char *key, char *val);
 #endif
+
+// other common functions
+int parse_oauth_method(oauthparam *op, char *value);
 
 // keyfile.c
 int read_keyfile(char *fn, oauthparam *op);

@@ -1,4 +1,4 @@
-/* system-dependent definitions for oauth_utils
+/* system-dependent definitions for oauth-utils
 
    Written for GNU fileutils.
    Adapted for autoproject by James R. Van Zandt.
