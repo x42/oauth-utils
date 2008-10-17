@@ -29,8 +29,8 @@ endif
 
 configure:
 	aclocal 
-	automake --gnu --add-missing --copy
 	autoheader 
+	automake --gnu --add-missing --copy
 	autoconf 
 
 config.status: configure
