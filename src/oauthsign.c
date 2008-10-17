@@ -348,7 +348,7 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
-  if (want_write && !datafile || strlen(datafile)<1) {
+  if (want_write && !datafile || (datafile && strlen(datafile)<1)) {
     want_write=0;
     fprintf(stderr, "WARNING: no filename given. use -F or -f.\n");
   }
