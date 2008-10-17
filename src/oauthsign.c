@@ -373,7 +373,6 @@ int main (int argc, char **argv) {
       if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not generate oAuth signature.\n");
       exitval|=8;
     }
-    if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
 
     if (!want_dry_run) {
       reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
