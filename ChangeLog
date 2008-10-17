@@ -1,4 +1,8 @@
 2008-10-16  Robin Gareus  <robin@gareus.org>
+	* version 0.1.5
+	* fixed segfault on filename-check.
+
+2008-10-16  Robin Gareus  <robin@gareus.org>
 	* version 0.1.4
 	* updated debian packaging system
 
