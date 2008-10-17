@@ -84,7 +84,7 @@ install-indep:
 	# debian/<package>-doc.
 	#INSTALLDOC#
 
-	echo "doc/example.sh" >> $(CURDIR)/debian/docs
+	#echo "doc/example.sh" >> $(CURDIR)/debian/docs
 	install -m 644 doc/example.sh   $(CURDIR)/debian/oauth-utils/usr/share/doc/oauth-utils/
 
 	dh_install -i
