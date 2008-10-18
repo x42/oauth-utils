@@ -52,8 +52,11 @@ void add_kv_to_array(int *argcp, char ***argvp, char *key, char *val);
 
 // other common functions
 int parse_oauth_method(oauthparam *op, char *value);
+void reset_oauth_param(oauthparam *op);
+void reset_oauth_token(oauthparam *op);
 
 // keyfile.c
 int read_keyfile(char *fn, oauthparam *op);
 int save_keyfile(char *fn, oauthparam *op);
 
+char *url_unescape(const char *string); // XXX oauth_url_unescape();

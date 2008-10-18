@@ -1,5 +1,5 @@
 /* 
-   oauthsign - command line oauth
+   oauthverify - command line oauth
 
    Copyright (C) 2008 Robin Gareus
 
@@ -44,17 +44,10 @@ static void usage (int status);
 /* The name the program was run with, stripped of any leading path. */
 char *program_name;
 
-/* getopt_long return codes */
-enum {DUMMY_CODE=129
-      ,DRYRUN_CODE
-      ,CURLOUT_CODE
-};
-
 /* Option flags and variables */
 
 int want_quiet   = 0; /* --quiet, --silent */
 int want_verbose = 0; /* --verbose */
-int want_dry_run = 0; /* --dry-run */
 
 int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit coded 
                       //  bit0 (1)  : enable ?! (also see want_dry_run)
@@ -68,9 +61,6 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit8 (256):  escape POST parameters with format_array(..)
                       //  bit9 (512):  curl-output
                       //
-int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
-
-int want_write   = 0;
 int   oauth_argc = 0;
 char **oauth_argv = NULL;
 char *datafile   = NULL;
@@ -81,7 +71,6 @@ static struct option const long_options[] =
   {"quiet", no_argument, 0, 'q'},
   {"silent", no_argument, 0, 'q'},
   {"verbose", no_argument, 0, 'v'},
-  {"dry-run", no_argument, 0, DRYRUN_CODE},
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'V'},
 
@@ -97,17 +86,11 @@ static struct option const long_options[] =
 
   {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
   {"post", no_argument, 0, 'p'},
-//{"escape-post-param", no_argument, 0, 'P'}, // TODO: rename ''--print-escaped''
-  {"curl", no_argument, 0, CURLOUT_CODE}, // TODO: rename '--print-curl'
   {"data", required_argument, 0, 'd'},
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
 
   {"file", required_argument, 0, 'f'},
-  {"write", no_argument, 0, 'w'}, 
-//{"writefile", required_argument, 0, 'F'}, 
-//{"execute", no_argument, 0, 'x'}, 
-//{"oauthrequest", no_argument, 0, 'X'}, 
   {NULL, 0, NULL, 0}
 };
 
@@ -129,7 +112,6 @@ static int decode_switches (int argc, char **argv) {
 			   "d:" /* URL-query parameter data eg.
                * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
 			   "m:" /* oauth signature Method */
-			   "P" 	/* print escaped post parameters */
 
 			   "c:" /* consumer-key*/
 			   "C:" /* consumer-secret */
@@ -137,12 +119,7 @@ static int decode_switches (int argc, char **argv) {
 			   "T:" /* token-secret */
 
 			   "f:" /* read key/data file */
-			   "w" 	/* write to key/data file, save request/access token state */
-			   "F:" /* set key/data filename */
-			   "x" 	/* execute */
-			   "X" 	/* execute and parse reply */
-			   "e"  /* erase token */
-			   "E", /* erase token and conusmer */
+			   "e", /* erase token */
 			   long_options, (int *) 0)) != EOF) {
     switch (c) {
       case 'q':		/* --quiet, --silent */
@@ -150,12 +127,6 @@ static int decode_switches (int argc, char **argv) {
         break;
       case 'v':		/* --verbose */
         want_verbose = 1;
-        break;
-      case DRYRUN_CODE:	/* --dry-run */
-        want_dry_run = 1;
-        break;
-      case CURLOUT_CODE:	/* --curl */
-        mode|= 512;
         break;
       case 'V':
         printf ("%s %s (%s)", PACKAGE, VERSION, OS);
@@ -181,8 +152,6 @@ static int decode_switches (int argc, char **argv) {
         mode&=~(1|2|4);
         if (!strncasecmp(optarg,"GET",3))
           mode|=1;
-     // else if (!strncasecmp(optarg,"POSTREQUEST",4))
-     //   mode|=4;
         else if (!strncasecmp(optarg,"POST",4))
           mode|=2;
         else 
@@ -209,26 +178,8 @@ static int decode_switches (int argc, char **argv) {
         break;
       case 'f':
         read_keyfile(optarg, &op);
-      case 'F':
-        if (datafile) free(datafile);
-        datafile=xstrdup(optarg);
-        break;
-      case 'w':
-        want_write=1;
-        break;
-      case 'X':
-        mode|=128; // parse reply and enter request mode..
-      case 'x':
-        request_mode=1;
-        break;
       case 'e':
         reset_oauth_token(&op);
-        break;
-      case 'E':
-        reset_oauth_param(&op);
-        break;
-      case 'P':
-        mode|=256;
         break;
       case 'm':
         if (parse_oauth_method(&op, optarg)) usage(1);
@@ -249,7 +200,7 @@ usage (int status)
 {
   printf (_("%s - \
 command line utilities for oauth\n"), program_name);
-  printf (_("Usage: %s [OPTION]... URL [CKey] [CSec] [TKey] [Tsec]\n"), program_name);
+  printf (_("Usage: %s [OPTION]... URL\n"), program_name);
   printf (_("\
 Options:\n\
   -h, --help                  display this help and exit\n\
@@ -271,35 +222,13 @@ Options:\n\
   -P,                         print URL-escaped POST parameters\n\ 
 */"\
   \n\
-  -c, --CK, --consumer-key    <text> \n\
-  -C, --CS, --consumer-secret <text> \n\
-  -t, --TK, --token-key       <text> \n\
-  -T, --TS, --token-secret    <text> \n\
+  -c, --CK, --consumer-key    <text> - require this consumer\n\
+  -C, --CS, --consumer-secret <text> - set consumer secret\n\
+  -t, --TK, --token-key       <text> - require this token\n\
+  -T, --TS, --token-secret    <text> - set token secret\n\
   \n\
   -f, --file <filename>       read tokens and secrets from config-file\n\
-  -w                          write tokens to config-file\n\
-  -F <filename>               set config-file name w/o reading the file.\n\
-  -x                          make HTTP request and return the replied content\n\
-  -X                          make HTTP request and parse the reply for tokens\n\
-                              use '-X -w' to request and store tokens.\n\
   -e, --erase-token           clear [access|request] tokens.\n\
-  -E, --erase-all             wipe all tokens and reset method to HMAC-SHA1.\n\
-  --dry-run                   take no real actions (with -x, -w or -X)\n\
-  \n\
-  The position of parameters -d, -f, -F, -e, -E and all tokens matters!\n\
-  \n\
-  Tokens are read from file at the moment the -f option is parsed overriding \n\
-  the current value(s). Optional trailing key/secret params are parsed last.\n\
-  eg.\n\
-    '-f config.txt -e -C secret -F out.txt -w' reads the settings from file,\n\
-  then deletes the access/request tokens and finally overrides the consumer-\n\
-  secret. Only the consumer-key is left from config.txt and will be saved \n\
-  to out.txt along with the new secret. If -X is given and the HTTP request\n\
-  succeeds, the received token and secret will be stored as well.\n\
-  \n\
-  The request URL is constructed by first parsing all query-parameters from\n\
-  the URL; then -d parameters are added, and finally oauth_XYZ params \n\
-  appended.\n\
   \n\
 "));
   exit (status);
@@ -309,8 +238,6 @@ Options:\n\
 int main (int argc, char **argv) {
   int i;
   int exitval=0;
-  int oaargc =0;
-  char **oaargv= NULL;
   char *sign = NULL;
 
   // initialize 
@@ -325,83 +252,81 @@ int main (int argc, char **argv) {
 
   if (i>=argc) usage(1);
   op.url=xstrdup(argv[i++]);
+  if (argc>i) usage(EXIT_FAILURE);
 
-  if (argc>i) { if (op.c_key) free(op.c_key); op.c_key=xstrdup(argv[i++]); }
-  if (argc>i) { if (op.c_secret) free(op.c_secret); op.c_secret=xstrdup(argv[i++]); }
-  if (argc>i) { if (op.t_key) free(op.c_key); op.t_key=xstrdup(argv[i++]); }
-  if (argc>i) { if (op.t_secret) free(op.t_secret); op.t_secret=xstrdup(argv[i++]); }
-  if (argc>i) 
-      usage(EXIT_FAILURE);
-
-  // check settings 
-
-  if (!op.c_key || strlen(op.c_key)<1) {
-    fprintf(stderr, "Error: consumer key not set.\n");
+  // do the work.
+  char *wanted_sign = NULL;
+  // search op.URL and oauth_argv for 'oauth_signature' 
+  {
+    char *start, *end;
+    if ((start=strstr(op.url,"oauth_signature="))) {
+      start+=16;
+      if (!(end=strchr(start,'&'))) {
+        end=start+strlen(start);
+      }
+      char *tmp=xmalloc((end-start+1)*sizeof(char));
+      strncpy(tmp,start,(end-start));
+      tmp[(end-start)]=0;
+      wanted_sign=url_unescape(tmp);
+      free(tmp);
+    }
+  }
+  if (!wanted_sign) {
+    int ii;
+    for (ii=0;ii<oauth_argc;ii++) {
+      if (!strncmp(oauth_argv[ii],"oauth_signature=",16)) {
+        wanted_sign=xstrdup(&(oauth_argv[i][16]));
+        break;
+      }
+    }
+  }
+  if (!wanted_sign) {
+    fprintf(stderr, "can not find any signature to verify.\n");
     exit(1);
   }
 
-  if (want_write && !datafile || (datafile && strlen(datafile)<1)) {
-    want_write=0;
-    fprintf(stderr, "WARNING: no filename given. use -F or -f.\n");
-  }
-
-  // do the work.
- 
-  if (want_write && !want_dry_run) save_keyfile(datafile, &op); // save current state
-  
-  sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
-
-  if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
-
-  if(!request_mode) {
-    if (sign) { 
-      add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
-      free(sign);
-    }
-    format_array(mode, oaargc, oaargv);
-  } else { // request_mode 
-    char *reply;
-    if (!sign) { 
-      if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not generate oAuth signature.\n");
-      exitval|=8;
-    }
-
-    if (!want_dry_run) {
-      reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
-    } else { 
-      printf("DRY-RUN. not making any HTTP request.\n"); 
-      if (sign) add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
-      format_array(mode, oaargc, oaargv);
-      reply=NULL;
-    }
-
-    if (!reply) { 
-      if (!exitval || want_verbose) fprintf(stderr,"ERROR: no reply from HTTP request.\n");
-      exitval|=2;
-    } else if (want_verbose || (mode&128)==0) {
-      if(want_verbose) printf("------HTTP reply------\n");
-      printf("%s\n", reply);
-      if(want_verbose) printf("----------------------\n");
-    }
-
-    if (mode&128) {
-      reset_oauth_token(&op);
-      if (parse_reply(reply, &(op.t_key), &(op.t_secret))) { 
-        if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not parse reply.\n");
-        exitval|=4;
-      } else if (!want_quiet) {
-        printf ("token=%s\n",op.t_key);
-        printf ("token_secret=%s\n",op.t_secret);
+  { // recalculate signature.
+    int myargc=0;
+    char **myargv = NULL;
+    url_to_array(&myargc, &myargv, mode, op.url);
+    append_parameters(&myargc, &myargv, oauth_argc, oauth_argv);
+    sign=process_array(myargc, myargv, mode, &op);
+    { // if not NULL: compare op.c_key with consumer_key and similar op.t_key.
+      int ii;
+      for (ii=0;ii<myargc;ii++) {
+        if (!strncmp(myargv[ii],"oauth_consumer_key=",19)) {
+          if (!op.c_key) continue;
+          if (strcmp(&(myargv[ii][19]),op.c_key)) {
+            exitval|=4;
+            if (!want_quiet) fprintf(stderr, "consumer key mismatch.\n");
+          }
+        }
+        if (!strncmp(myargv[ii],"oauth_token_key=",16)) {
+          if (!op.t_key) continue;
+          if (strcmp(&(myargv[ii][16]),op.t_key)) {
+            exitval|=8;
+            if (!want_quiet) fprintf(stderr, " token key mismatch.\n");
+          }
+        }
       }
     }
-
-    if (sign) free(sign);
-    if (reply) free(reply);
+    free_array(myargc,myargv);
   }
- 
-  if (exitval==0 && want_write && !want_dry_run) save_keyfile(datafile, &op); // save final state
 
-  free_array(oaargc, oaargv);
+  if (!sign) {
+    exitval|=1;
+    if (!want_quiet) fprintf(stderr, "error calculating signature.\n");
+  } else {
+    if (want_verbose) {
+      printf("wanted: '%s'\n", wanted_sign);
+      printf("got:    '%s'\n", sign);
+    }
+    if (strcmp(sign, wanted_sign)) {
+      exitval|=2;
+      if (!want_quiet) fprintf(stderr, "signatures mismatch.\n");
+    } else if (!want_quiet) printf("good signature.\n");
+  }
+
   free_array(oauth_argc, oauth_argv);
   return (exitval);
 }

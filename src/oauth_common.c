@@ -47,6 +47,22 @@ int parse_oauth_method(oauthparam *op, char *value) {
     return (-1);
 }
 
+void reset_oauth_param(oauthparam *op) {
+  if (op->t_key) free(op->t_key);
+  if (op->t_secret) free(op->t_secret);
+  if (op->c_key) free(op->c_key);
+  if (op->c_secret) free(op->c_secret);
+  memset(op,0,sizeof(oauthparam));
+  op->signature_method=OA_HMAC;
+}
+
+void reset_oauth_token(oauthparam *op) {
+  if (op->t_key) free(op->t_key);
+  if (op->t_secret) free(op->t_secret);
+  op->t_key=NULL;
+  op->t_secret=NULL;
+}
+
 #if 0 // obsolte
 int oauthrequest (int mode, oauthparam *op) {
   if (mode&2==0) { // GET
@@ -137,7 +153,7 @@ int parse_reply(const char *reply, char **token, char **secret) {
   return ok;
 }
 
-int url_to_array(int *argcp, char ***argvp, int mode, char *url) {
+int url_to_array(int *argcp, char ***argvp, const int mode, const char *url) {
   if (mode&2) // POST
     (*argcp) = oauth_split_post_paramters(url, argvp, 2); // bit0(1): replace '+', bit1(2): don't replace '\001' -> '&'
   else if ((mode&2) == 0) // GET
@@ -150,12 +166,15 @@ int url_to_array(int *argcp, char ***argvp, int mode, char *url) {
 // reverse: result = oauth_serialize_url(argc, (postargs?1:0), argv);
 }
 
-void add_param_to_array(int *argcp, char ***argvp, char *addparam) {
+void add_param_to_array(int *argcp, char ***argvp, const char *addparam) {
   (*argvp)=(char**) xrealloc(*argvp,sizeof(char*)*((*argcp)+1));
   (*argvp)[(*argcp)++]= (char*) xstrdup(addparam); 
 }
 
-void add_kv_to_array(int *argcp, char ***argvp, char *key, char *val) {
+void add_kv_to_array(int *argcp, char ***argvp, const char *key, const char *value) {
+  const char *val=value;
+  if (!key) return;
+  if (!val) val="";
   char *param = (char*) xmalloc(sizeof(char)*(strlen(key)+strlen(val)+2)); 
   param[0]='\0';
   if (strchr(key,'=')) fprintf(stderr, "WARNING: '=' in parameter-keys MUST be url-escaped.\n");
@@ -193,7 +212,8 @@ void append_parameters(int *dest_argcp, char ***dest_argvp, int src_argc, char *
   int i;
   if (!src_argv && !src_argc>0)  return;
   if (!dest_argcp || !dest_argvp)  return;
-  for (i=0; i< src_argc;i++) {
+  for (i=0; i<src_argc; i++) {
+    if (!strncmp(src_argv[i],"oauth_signature=",16)) continue;
     add_param_to_array(dest_argcp,dest_argvp,src_argv[i]);
   }
 }
@@ -273,6 +293,7 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int 
   }
 
   sign=process_array(argc, argv, mode, op);
+  free_array(argc,argv);
   return (sign); // needs to be free()d.
 
 #if 0 // cruft

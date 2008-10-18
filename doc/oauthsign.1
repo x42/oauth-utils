@@ -76,12 +76,77 @@ Show summary of options.
 .B \-V, \-\-version
 Show version of program.
 .TP
-.B ... 
-for all options, run
+.B \-b, \-\-base-string
+print OAuth base-string and exit.
+.TP
+.B \-B, \-\-base-url
+print OAuth base-URL and exit.
+.TP
+.B \-r, \-\-request <type>
+set the HTTP request type (POST, GET [default]).
+.TP
+.B \-p, \-\-post
+same as '-r POST'
+.TP
+.B \-d, \-\-data <key>[=<value>]
+add key=value URL query parameters.
+.TP
+.B \-m, \-\-signature-method <method>
+specify the oauth signature method (PLAINTEXT, RSA-SHA1, HMAC-SHA1 [default]).
+.TP
+.B \-c, \-\-CK, \-\-consumer-key <text>
+set consumer-key.
+.TP
+.B \-C, \-\-CS, \-\-consumer-secret <text>
+set consumer-secret.
+.TP
+.B \-t, \-\-TK, \-\-token-key <text>
+set token-key.
+.TP
+.B \-T, \-\-TS, \-\-token-secret <text>
+set token-secret.
+.TP
+.B \-f, \-\-file <filename>
+read tokens and secrets from config-file.
+.TP
+.B \-w
+write tokens to config-file.
+.TP
+.B \-F <filename>
+set config-file name w/o reading the file. useful for writing to a different file than reading eg. '-f file1 -F file2 -w'
+.TP
+.B \-x
+make HTTP request and return the replied content.
+.TP
+.B \-X
+make HTTP request and parse the reply for tokens.
+.TP
+.B \-e, \-\-erase-token
+clear the [access|request] token (key&secret).
+.TP
+.B \-E, \-\-erase-all
+wipe consumer and token information and reset signature method to HMAC-SHA1.
+.TP
+.B \-\-dry-run
+take no real actions (with -x, -w or -X)
 .PP
-.Vb 1
-\&        oauthsign \-h 
-.Ve
+The position of parameters -d, -f, -F, -e, -E and all tokens matters!
+Tokens are read from file at the moment the -f option is parsed overriding
+the current value(s). Optional trailing key/secret params are parsed last.
+eg. '\-f config.txt -e -C secret -F out.txt -w' reads the settings from file,
+then deletes the access/request tokens and finally overrides the consumer-
+secret. Only the consumer-key is left from config.txt and will be saved 
+to out.txt along with the new secret. If -X is given and the HTTP request
+succeeds, the received token and secret will be stored in out.txt as well.
+.PP
+The request URL is constructed by first parsing all query-parameters from
+the URL; then -d parameters are added, and finally oauth_XYZ params 
+appended. The order of the request parameters (while different in the oauth
+base-url) is preserved.
+.PP
+Note that there is also a difference between empty ("") and unset (NULL) parameters: 
+an empty parameter is still included in the request, while an unset parameter is not.
+use '-e' or '-E' to unset previously set parameters. 
 .SH EXAMPLE
 run the following commands in sequence to walk though an
 .URL "http://term.ie/oauth/example/" "OAuth example".
