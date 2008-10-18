@@ -30,8 +30,46 @@
 
 #include "oauth_common.h"
 
-extern int want_quiet;
 extern int want_verbose;
+extern int no_warnings;
+
+// based on curl_easy_unescape from libcurl .. available in liboauth 0.4.3
+#include <ctype.h>
+#define ISXDIGIT(x) (isxdigit((int) ((unsigned char)x)))
+char *url_unescape_len(const char *string, int *olen) {
+  int alloc = (int)strlen(string)+1;
+  char *ns = (char*) xmalloc(alloc);
+  unsigned char in;
+  int strindex=0;
+  long hex;
+
+  while(--alloc > 0) {
+    in = *string;
+    if(('%' == in) && ISXDIGIT(string[1]) && ISXDIGIT(string[2])) {
+      char hexstr[3]; // '%XX'
+      hexstr[0] = string[1];
+      hexstr[1] = string[2];
+      hexstr[2] = 0;
+      hex = strtol(hexstr, NULL, 16);
+      in = (unsigned char)hex; /* hex is always < 256 */
+      string+=2;
+      alloc-=2;
+    }
+    ns[strindex++] = in;
+    string++;
+  }
+  ns[strindex]=0;
+  if(olen) *olen = strindex;
+  return ns;
+}
+
+char *url_unescape(const char *string) {
+#if LIBOAUTH_VERSION_MAJOR >= 0 && LIBOAUTH_VERSION_MINOR >= 4  && LIBOAUTH_VERSION_MICRO >= 3
+  return oauth_url_unescape(string, NULL);
+#else
+  return url_unescape_len(string, NULL);
+#endif
+}
 
 int parse_oauth_method(oauthparam *op, char *value) {
     if (!strcmp(value, "PLAINTEXT")) {
@@ -153,17 +191,23 @@ int parse_reply(const char *reply, char **token, char **secret) {
   return ok;
 }
 
+/**
+ * parses all but 'oauth_signature' into an parameter array.
+ * inverse: oauth_serialize_url() - here: format_array();
+ *
+ * @param mode bit1 selects GET/POST type of escaping parameters.
+ */
 int url_to_array(int *argcp, char ***argvp, const int mode, const char *url) {
   if (mode&2) // POST
     (*argcp) = oauth_split_post_paramters(url, argvp, 2); // bit0(1): replace '+', bit1(2): don't replace '\001' -> '&'
   else if ((mode&2) == 0) // GET
     (*argcp) = oauth_split_url_parameters(url, argvp);  // same as oauth_split_post_paramters(url, &argv, 1);
   else { // TODO: add support for PUT, DELETE, etc
-    fprintf(stderr, "WARNING: don't know how to parse request\n");
+    if (!no_warnings)
+      fprintf(stderr, "WARNING: don't know how to parse this request.\n");
     (*argcp) = 0;
   }
   return (*argcp);
-// reverse: result = oauth_serialize_url(argc, (postargs?1:0), argv);
 }
 
 void add_param_to_array(int *argcp, char ***argvp, const char *addparam) {
@@ -177,20 +221,31 @@ void add_kv_to_array(int *argcp, char ***argvp, const char *key, const char *val
   if (!val) val="";
   char *param = (char*) xmalloc(sizeof(char)*(strlen(key)+strlen(val)+2)); 
   param[0]='\0';
-  if (strchr(key,'=')) fprintf(stderr, "WARNING: '=' in parameter-keys MUST be url-escaped.\n");
+  if (strchr(key,'=') && !no_warnings) fprintf(stderr, "WARNING: '=' in a parameter-key MUST be url-escaped.\n");
   strcat(param,key); 
   strcat(param,"=");
   strcat(param,val);
-#if 0
-  char *t = oauth_url_escape(key);
-  if (t) { strcat(param,t); free(t); }
-  strcat(param,"=");
-  t = oauth_url_escape(val);
-  if (t) { strcat(param,t); free(t); }
-#endif
   add_param_to_array(argcp, argvp, param);
   free(param);
 }
+#if 1 // unused
+void add_escaped_kv_to_array(int *argcp, char ***argvp, const char *key, const char *value) {
+  const char *val=value;
+  if (!key) return;
+  if (!val) val="";
+  char *t1 = oauth_url_escape(key);
+  char *t2 = oauth_url_escape(val);
+  char *param = (char*) xmalloc(sizeof(char)*(strlen(t1)+strlen(t1)+2)); 
+  param[0]='\0';
+  strcat(param,t1); 
+  strcat(param,"=");
+  strcat(param,t2);
+  add_param_to_array(argcp, argvp, param);
+  free(t1);
+  free(t2);
+  free(param);
+}
+#endif
 
 void free_array(int argc, char **argv) {
   if (argc<1 || !argv) return;
@@ -218,6 +273,13 @@ void append_parameters(int *dest_argcp, char ***dest_argvp, int src_argc, char *
   }
 }
 
+/*
+ * creates base string and returns signature.
+ * @param mode
+ *
+ * @return encoded string otherwise NULL
+ * The caller must free the returned string.
+ */
 char *process_array(int argc, char **argv, int mode, oauthparam *op) {
   char *base_url;
   char *okey, *odat, *sign;
@@ -227,15 +289,20 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
   // serialize URL
   base_url= oauth_serialize_url_parameters(argc, argv);
 
-  if (mode&16 || want_verbose) fprintf(stdout, "base-url=%s\n",base_url); // base-url
+  if (mode&16)           fprintf(stdout, "%s\n",base_url);
+  else if (want_verbose) fprintf(stderr, "base-url=%s\n",base_url);
   if (mode&16) exit(0);
 
   // generate signature
   okey = oauth_catenc(2, op->c_secret, op->t_secret);
   odat = oauth_catenc(3, mode&2?"POST":"GET", argv[0], base_url); // TODO: add support for PUT, DELETE ...
-  if (mode&8  || want_verbose) fprintf(stdout, "base-string=%s\n",odat); // base-string
-  if (mode&32 || want_verbose) fprintf(stdout, "secrets=%s\n",okey); 
-  if (mode&8) exit(0);
+
+  if (mode&8)            fprintf(stdout, "%s\n",odat);
+  else if (want_verbose) fprintf(stderr, "base-string=%s\n",odat);
+
+  if (mode&32)           fprintf(stdout, "%s\n",okey); 
+  else if (want_verbose) fprintf(stderr, "secret-string=%s\n",okey); 
+  if (mode&40) exit(0);
 
   switch(op->signature_method) {
     case OA_RSA:
@@ -249,7 +316,8 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
   }
   free(odat); 
   free(okey);
-  if (mode&64 && !want_verbose) fprintf(stdout, "oauth_signature=%s\n",sign); 
+  if (mode&64 && !want_verbose) fprintf(stdout, "%s\n",sign); 
+  //if (mode&64) exit(0); // XXX
   return sign; // needs to be free()d
 }
 
@@ -325,12 +393,15 @@ void array_format_raw(int argc, int start, char **argv, char *sep) {
     while(i<argc) {
       printf("%s", argv[i]);
       i++;
-      if (i+1<argc)printf("%s",sep);
+      if (i+1<argc) printf("%s",sep);
     }
     printf("\n");
 
 }
 
+// honors bit 1 (2) GET/POST
+//        bit 8 (256) irregular escape
+//        bit 9 (512) curl output
 void format_array(int mode, int argc, char **argv) {
   if (argc<1 || !argv) return;
 
@@ -339,21 +410,21 @@ void format_array(int mode, int argc, char **argv) {
     return;
   }
 
-  if (mode&2) { // POST
-    printf("%s\n\n", argv[0]);
-  }
-
-  if (mode&258 == 2) { 
+  if ((mode&258) == 2) { 
+    printf("%s\n", argv[0]);
     array_format_raw(argc, 1, argv, "\n");
-  } else if (mode&258) { // -- encoded parameters..
+  } else if ((mode&258) == 258) { // -- encoded POST parameters! 
   #if LIBOAUTH_VERSION_MAJOR >= 0 && LIBOAUTH_VERSION_MINOR >= 4  && LIBOAUTH_VERSION_MICRO >= 1
-    char *result = oauth_serialize_url_sep(argc, (mode&2?1:0), argv, "\n");
+    char *result = oauth_serialize_url_sep(argc, 1, argv, "\n");
+    printf("%s\n", argv[0]);
     printf("%s\n", result); 
     free (result);
   #else
-    fprintf(stderr, "ERROR: encoded parameter output is not supported by this version of liboauth.\n" ); 
+    if (!no_warnings)
+      fprintf(stderr, "ERROR: encoded parameter output is not supported by this version of liboauth.\n" ); 
   #endif
-  } else if (mode&2 && 0) { // TODO - add mode for this ?!
+  } else if ((mode&258) == 256) { // irregular GET
+    printf("%s?", argv[0]);
     array_format_raw(argc, 1, argv, "&");
   } else {
     char *result = oauth_serialize_url(argc, (mode&2?1:0), argv);

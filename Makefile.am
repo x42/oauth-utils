@@ -10,7 +10,7 @@ EXTRA_DIST= \
 TESTS=doc/example.sh
 
 #  install the man pages
-man_MANS=doc/oauth-utils.7 doc/oauthsign.1
+man_MANS=doc/oauth-utils.7 doc/oauthsign.1 doc/oauthverify.1
 
 MAINTAINERCLEANFILES = \
  Makefile.in \

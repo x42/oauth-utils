@@ -52,6 +52,7 @@ enum {DUMMY_CODE=129
 
 /* Option flags and variables */
 
+int no_warnings  = 0; /* --no-warn */ // TODO 
 int want_quiet   = 0; /* --quiet, --silent */
 int want_verbose = 0; /* --verbose */
 int want_dry_run = 0; /* --dry-run */
@@ -65,11 +66,12 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit5 (32) :  print secrets along with base-string(8)
                       //  bit6 (64) :  print signature after generating it. (unless want_verbose is set: it's printed anyway)
                       //  bit7 (128):  parse reply (request token, access token)
-                      //  bit8 (256):  escape POST parameters with format_array(..)
+                      //  bit8 (256):  toggle ouput Parameter escape. (dont escape GETs and escape POST params with format_array(..)
                       //  bit9 (512):  curl-output
                       //
 int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
 
+int print_as_get = 0; 
 int want_write   = 0;
 int   oauth_argc = 0;
 char **oauth_argv = NULL;
@@ -130,6 +132,7 @@ static int decode_switches (int argc, char **argv) {
                * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
 			   "m:" /* oauth signature Method */
 			   "P" 	/* print escaped post parameters */
+			   "G" 	/* always print as (escaped) GET parameters */ // FIXME: 'g' 'G' 'P' modifiers
 
 			   "c:" /* consumer-key*/
 			   "C:" /* consumer-secret */
@@ -226,6 +229,9 @@ static int decode_switches (int argc, char **argv) {
         break;
       case 'E':
         reset_oauth_param(&op);
+        break;
+      case 'G':
+        print_as_get=1;
         break;
       case 'P':
         mode|=256;
@@ -336,41 +342,65 @@ int main (int argc, char **argv) {
   // check settings 
 
   if (!op.c_key || strlen(op.c_key)<1) {
-    fprintf(stderr, "Error: consumer key not set.\n");
+    fprintf(stderr, "ERROR: consumer key not set.\n");
     exit(1);
   }
 
   if (want_write && !datafile || (datafile && strlen(datafile)<1)) {
     want_write=0;
-    fprintf(stderr, "WARNING: no filename given. use -F or -f.\n");
+    fprintf(stderr, "ERROR: no filename given. use -F or -f.\n");
+    exit(1);
   }
 
-  // do the work.
- 
-  if (want_write && !want_dry_run) save_keyfile(datafile, &op); // save current state
+  if (!(mode&2) && print_as_get) {
+    if (!no_warnings)
+      fprintf(stderr, "WARNING: -G is redundant with GET requests.\n");
+  } else if (!want_quiet && print_as_get) {
+    if (!no_warnings)
+      fprintf(stderr, "WARNING: non standard output format.\n");
+  }
+  if ((mode&256) && !want_quiet) {
+    if (!no_warnings)
+      fprintf(stderr, "WARNING: non standard parameter escape settings.\n");
+  }
+
+  if (want_write && !want_dry_run) { // save current state
+    if (save_keyfile(datafile, &op)) {
+      want_write=0; // XXX 
+      if (!no_warnings)
+        fprintf(stderr, "WARNING: saving state to file '%s' failed.\n", datafile);
+    } else if (want_verbose) {
+      fprintf(stderr, "saved state to %s\n", datafile);
+    }
+  }
   
   sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
 
-  if (sign && want_verbose) printf("oauth_signature=%s\n", sign);
+  if (sign && want_verbose) 
+    fprintf(stderr, "oauth_signature=%s\n", sign);
 
   if(!request_mode) {
     if (sign) { 
       add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
       free(sign);
     }
+    if (print_as_get) mode&=~2; // print as GET !
     format_array(mode, oaargc, oaargv);
   } else { // request_mode 
     char *reply;
     if (!sign) { 
-      if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not generate oAuth signature.\n");
+      if (!no_warnings && !want_quiet) 
+        fprintf(stderr,"WARNING: could not generate oAuth signature.\n");
       exitval|=8;
     }
 
     if (!want_dry_run) {
       reply = oauthrequest_ext(mode, &op, oaargc, oaargv, sign);
     } else { 
-      printf("DRY-RUN. not making any HTTP request.\n"); 
+      if (!want_quiet || want_verbose) 
+        fprintf(stderr, "DRY-RUN. not making any HTTP request.\n"); 
       if (sign) add_kv_to_array(&oaargc, &oaargv, "oauth_signature", sign);
+      if (print_as_get) mode&=~2; // print as GET !
       format_array(mode, oaargc, oaargv);
       reply=NULL;
     }
@@ -379,12 +409,12 @@ int main (int argc, char **argv) {
       if (!exitval || want_verbose) fprintf(stderr,"ERROR: no reply from HTTP request.\n");
       exitval|=2;
     } else if (want_verbose || (mode&128)==0) {
-      if(want_verbose) printf("------HTTP reply------\n");
-      printf("%s\n", reply);
-      if(want_verbose) printf("----------------------\n");
+      if(want_verbose) fprintf(stderr, "------HTTP reply------\n");
+      fprintf(want_verbose?stderr:stdout, "%s\n", reply);
+      if(want_verbose) fprintf(stderr, "----------------------\n");
     }
 
-    if (mode&128) {
+    if (!want_dry_run && (mode&128)) {
       reset_oauth_token(&op);
       if (parse_reply(reply, &(op.t_key), &(op.t_secret))) { 
         if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not parse reply.\n");
@@ -399,8 +429,16 @@ int main (int argc, char **argv) {
     if (reply) free(reply);
   }
  
-  if (exitval==0 && want_write && !want_dry_run) save_keyfile(datafile, &op); // save final state
-
+  if (exitval==0 && want_write && !want_dry_run) { // save final state
+    if (save_keyfile(datafile, &op)) {
+      want_write=0;
+      if (!no_warnings)
+        fprintf(stderr, "WARNING: saving state to file '%s' failed.\n", datafile);
+    } else if (want_verbose) {
+      fprintf(stderr, "saved state to %s\n", datafile);
+    }
+  }
+ 
   free_array(oaargc, oaargv);
   free_array(oauth_argc, oauth_argv);
   return (exitval);

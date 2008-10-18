@@ -44,6 +44,7 @@ char *oauthrequest_ext (int mode, oauthparam *op, int oauthargc, char **oautharg
 void format_array(int mode, int argc, char **argv);
 void format_array_curl(int mode, int argc, char **argv);
 void free_array(int argc, char **argv);
+char *process_array(int argc, char **argv, int mode, oauthparam *op);
 #if 0 // private
 int url_to_array(int *argcp, char ***argvp, int mode, char *url);
 void add_param_to_array(int *argcp, char ***argvp, char *addparam);
@@ -59,4 +60,4 @@ void reset_oauth_token(oauthparam *op);
 int read_keyfile(char *fn, oauthparam *op);
 int save_keyfile(char *fn, oauthparam *op);
 
-char *url_unescape(const char *string); // XXX oauth_url_unescape();
+char *url_unescape(const char *string); ///< wrapper around oauth_url_unescape();
