@@ -275,7 +275,7 @@ int main (int argc, char **argv) {
     int ii;
     for (ii=0;ii<oauth_argc;ii++) {
       if (!strncmp(oauth_argv[ii],"oauth_signature=",16)) {
-        wanted_sign=xstrdup(&(oauth_argv[i][16]));
+        wanted_sign=xstrdup(&(oauth_argv[ii][16]));
         break;
       }
     }
@@ -293,21 +293,26 @@ int main (int argc, char **argv) {
     sign=process_array(myargc, myargv, mode, &op);
     { // if not NULL: compare op.c_key with consumer_key and similar op.t_key.
       int ii;
+      int flags=0;
       for (ii=0;ii<myargc;ii++) {
         if (!strncmp(myargv[ii],"oauth_consumer_key=",19)) {
           if (!op.c_key) continue;
           if (strcmp(&(myargv[ii][19]),op.c_key)) {
             exitval|=4;
             if (!want_quiet) fprintf(stderr, "consumer key mismatch.\n");
-          }
+          } else flags|=1;
         }
-        if (!strncmp(myargv[ii],"oauth_token_key=",16)) {
+        if (!strncmp(myargv[ii],"oauth_token=",12)) {
           if (!op.t_key) continue;
-          if (strcmp(&(myargv[ii][16]),op.t_key)) {
+          if (strcmp(&(myargv[ii][12]),op.t_key)) {
             exitval|=8;
-            if (!want_quiet) fprintf(stderr, " token key mismatch.\n");
-          }
+            if (!want_quiet) fprintf(stderr, "token mismatch.\n");
+          } else flags|=2;
         }
+      }
+      if (flags != ((op.t_key?2:0)|(op.c_key?1:0))) {
+         if (exitval==0 && !want_quiet) fprintf(stderr, "required token not found\n", flags);
+         exitval|=16;
       }
     }
     free_array(myargc,myargv);
