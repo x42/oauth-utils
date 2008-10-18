@@ -47,6 +47,7 @@ char *program_name;
 /* getopt_long return codes */
 enum {DUMMY_CODE=129
       ,DRYRUN_CODE
+      ,NOWARN_CODE
       ,CURLOUT_CODE
 };
 
@@ -84,6 +85,7 @@ static struct option const long_options[] =
   {"silent", no_argument, 0, 'q'},
   {"verbose", no_argument, 0, 'v'},
   {"dry-run", no_argument, 0, DRYRUN_CODE},
+  {"no-warn", no_argument, 0, NOWARN_CODE},
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'V'},
 
@@ -153,6 +155,9 @@ static int decode_switches (int argc, char **argv) {
         break;
       case 'v':		/* --verbose */
         want_verbose = 1;
+        break;
+      case NOWARN_CODE:	/* --no-warn */
+        no_warnings = 1;
         break;
       case DRYRUN_CODE:	/* --dry-run */
         want_dry_run = 1;
@@ -262,6 +267,7 @@ Options:\n\
   -V, --version               output version information and exit\n\
   -q, --quiet, --silent       inhibit usual output\n\
   -v, --verbose               print more information\n\
+  --no-warn                   dont print any warnings.\n\
   \n\
   -b, --base-string           print OAuth base-string and exit\n\
   -B, --base-url              print OAuth base-URL and exit\n\

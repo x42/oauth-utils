@@ -44,6 +44,11 @@ static void usage (int status);
 /* The name the program was run with, stripped of any leading path. */
 char *program_name;
 
+/* getopt_long return codes */
+enum {DUMMY_CODE=129
+      ,NOWARN_CODE
+};
+
 /* Option flags and variables */
 
 int no_warnings  = 0; /* --no-warn */ // TODO 
@@ -72,6 +77,7 @@ static struct option const long_options[] =
   {"quiet", no_argument, 0, 'q'},
   {"silent", no_argument, 0, 'q'},
   {"verbose", no_argument, 0, 'v'},
+  {"no-warn", no_argument, 0, NOWARN_CODE},
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'V'},
 
@@ -128,6 +134,9 @@ static int decode_switches (int argc, char **argv) {
         break;
       case 'v':		/* --verbose */
         want_verbose = 1;
+        break;
+      case NOWARN_CODE:	/* --no-warn */
+        no_warnings = 1;
         break;
       case 'V':
         printf ("%s %s (%s)", PACKAGE, VERSION, OS);
@@ -208,6 +217,7 @@ Options:\n\
   -V, --version               output version information and exit\n\
   -q, --quiet, --silent       inhibit usual output\n\
   -v, --verbose               print more information\n\
+  --no-warn                   dont print any warnings.\n\
   \n\
   -b, --base-string           print OAuth base-string and exit\n\
   -B, --base-url              print OAuth base-URL and exit\n\
