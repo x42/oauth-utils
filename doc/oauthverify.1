@@ -1,0 +1,130 @@
+.\"                              hey, Emacs:   -*- nroff -*-
+.\" oauth-utils is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; see the file COPYING.  If not, write to
+.\" the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+.\"
+.TH OAUTHVERIFY 1 "October 16, 2008"
+.\" Please update the above date whenever this man page is modified.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins (default)
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.\"
+.\" defines for verbose text
+.de Vb \" Begin verbatim text
+.ft CW
+.nf
+.ne \\$1
+..
+.de Ve \" End verbatim text
+.ft R
+.fi
+..
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+
+.SH NAME
+oauthverify \- oauth command line tool
+.SH SYNOPSIS
+.B oauthverify
+.RI [ options ]
+.RI < URL >
+.RI [ CKey ]
+.RI [ CSec ]
+.RI [ TKey ]
+.RI [ Tsec ]
+.SH DESCRIPTION
+\fBoauthverify\fP verifies oAuth request signatures
+.PP
+\fBoauthverify\fP does \fInot\fP keep track of consumers, token mappings and
+nonce (never more than once) identifiers. You can not build an oauth-server 
+(service-provider) with it; however you can use it within other software to 
+do so, or simply see this as a handy tool to debug signature verification.
+.SH OPTIONS
+\fBoauthsign\fP accepts the following options:
+.TP
+.B  --no-warn
+Disable warnings.
+.TP
+.BR  -q , " --quiet" , " --silent"
+Inhibit usual output.
+.TP
+.B  -v, --verbose
+Print more information.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-V, \-\-version
+Show version of program.
+.TP
+.B \-b, \-\-base-string
+print OAuth base-string and exit.
+.TP
+.B \-B, \-\-base-url
+print OAuth base-URL and exit.
+.TP
+.B \-r, \-\-request <type>
+set the HTTP request type (POST, GET [default]).
+.TP
+.B \-p, \-\-post
+same as '-r POST'
+.TP
+.B \-d, \-\-data <key>[=<value>]
+add key=value URL query parameters.
+.TP
+.B \-m, \-\-signature-method <method>
+require the request method to be <method> (PLAINTEXT, RSA-SHA1, HMAC-SHA1). default: use the method specified in the request parameters
+.TP
+.B \-c, \-\-CK, \-\-consumer-key <text>
+require this consumer-key to be present as request parameter.
+.TP
+.B \-C, \-\-CS, \-\-consumer-secret <text>
+set consumer-secret.
+.TP
+.B \-t, \-\-TK, \-\-token-key <text>
+require this oauth token to be present as request parameter.
+.TP
+.B \-T, \-\-TS, \-\-token-secret <text>
+set token-secret.
+.TP
+.B \-f, \-\-file <filename>
+read tokens and secrets from config-file.
+.TP
+.B \-e, \-\-erase-token
+clear the [access|request] token (key&secret).
+.PP
+The position of parameters -d, -f, -e, and all tokens matters!
+.SH EXAMPLE
+.PP
+.Vb 1
+\&oauthverify -C secret "$(oauthsign -c key -C secret http://example.org)"
+\&oauthverify -v -C secret "$(oauthsign -m PLAINTEXT -c key -C secret http://example.org)"
+.Ve
+.SH "SEE ALSO"
+.BR oauthsign (1),
+.BR oauth-utils (7).
+.SH AUTHOR
+oauth-utils was written by Robin Gareus <robin@gareus.org>.
+.PP
+This manual page was written by Robin Gareus <robin@gareus.org>,
+for the Debian project (but may be used by others).
+
