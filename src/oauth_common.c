@@ -393,7 +393,7 @@ void array_format_raw(int argc, int start, char **argv, char *sep) {
     while(i<argc) {
       printf("%s", argv[i]);
       i++;
-      if (i+1<argc) printf("%s",sep);
+      if (i<argc) printf("%s",sep);
     }
     printf("\n");
 

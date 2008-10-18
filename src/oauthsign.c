@@ -46,9 +46,9 @@ char *program_name;
 
 /* getopt_long return codes */
 enum {DUMMY_CODE=129
-      ,DRYRUN_CODE
-      ,NOWARN_CODE
-      ,CURLOUT_CODE
+     ,DRYRUN_CODE
+     ,NOWARN_CODE
+     ,CURLOUT_CODE
 };
 
 /* Option flags and variables */

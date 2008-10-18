@@ -1,15 +1,16 @@
 TODO:
 
-* output format select: get/post/curl, escaped/unescaped
+! output format select: get/post/curl, escaped/unescaped
 * parameter handling for each stage:
     1. how are arguments parsed (unescape,base64,..)
     2. how are they used when making the request (get: url-escape, post: unescape)
     3. how are they formatted for output.
-* parse --no-warn vs. quiet
-* rework stdout/stderr messages (verbose) -> pipe
+! parse --no-warn vs. quiet
+! rework stdout/stderr messages (verbose) -> pipe
 * properly read RSA-key..
 * allow to read _all_ parameters from file similar to curl '-d @<file-name>'
   --data-binary, --data-ascii (unescape params as '-f' does)
+* ask before overwriting data-file (allow it it's empty or can be parsed)
 
 oauthverify:
 * compare signature-method

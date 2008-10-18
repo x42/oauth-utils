@@ -46,7 +46,7 @@ char *program_name;
 
 /* getopt_long return codes */
 enum {DUMMY_CODE=129
-      ,NOWARN_CODE
+     ,NOWARN_CODE
 };
 
 /* Option flags and variables */
@@ -251,6 +251,8 @@ int main (int argc, char **argv) {
   int exitval=0;
   char *sign = NULL;
   char *wanted_sign = NULL;
+  int myargc=0;
+  char **myargv = NULL;
 
   // initialize 
 
@@ -268,8 +270,8 @@ int main (int argc, char **argv) {
 
   // do the work.
  
-  // search op.URL and oauth_argv for 'oauth_signature' 
-  {
+  if (!wanted_sign) {
+    // search op.url for 'oauth_signature' 
     char *start, *end;
     if ((start=strstr(op.url,"oauth_signature="))) {
       start+=16;
@@ -284,6 +286,7 @@ int main (int argc, char **argv) {
     }
   }
   if (!wanted_sign) {
+    // search oauth_argv for 'oauth_signature' 
     int ii;
     for (ii=0;ii<oauth_argc;ii++) {
       if (!strncmp(oauth_argv[ii],"oauth_signature=",16)) {
@@ -298,61 +301,53 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
+  // recalculate signature.
+  url_to_array(&myargc, &myargv, mode, op.url);
+  append_parameters(&myargc, &myargv, oauth_argc, oauth_argv);
+  sign=process_array(myargc, myargv, mode, &op);
 
-  { // recalculate signature.
-    int myargc=0;
-    char **myargv = NULL;
-    url_to_array(&myargc, &myargv, mode, op.url);
-    append_parameters(&myargc, &myargv, oauth_argc, oauth_argv);
-
-    { // parse signature_method 
-      int ii;
-      for (ii=0;ii<myargc;ii++) {
-        if (!strncmp(myargv[ii],"oauth_signature_method=",23)) {
-          if(parse_oauth_method(&op, &(myargv[ii][23]))) {
-            if (!want_quiet && !no_warnings) 
-              fprintf(stderr, "Warning: Can not parse signature method.\n");
-            exit(2); // XXX
-          }
-        }
+  if (1) { // require op.c_key to match consumer_key and similar op.t_key and method
+    OAuthMethod signature_method = op.signature_method; // remember wanted-method
+    int ii;
+    int flags=0;
+    for (ii=0;ii<myargc;ii++) {
+      if (!strncmp(myargv[ii],"oauth_consumer_key=",19)) {
+        if (!op.c_key) continue;
+        if (strcmp(&(myargv[ii][19]),op.c_key)) {
+          exitval|=4;
+          if (!want_quiet) 
+            fprintf(stderr, "Note: consumer key mismatch.\n");
+        } else flags|=1;
       }
-      // TODO: compare with '-m'  ?!
-    }
-    
-    sign=process_array(myargc, myargv, mode, &op);
-
-    { // if not NULL: compare op.c_key with consumer_key and similar op.t_key.
-      int ii;
-      int flags=0;
-      for (ii=0;ii<myargc;ii++) {
-        if (!strncmp(myargv[ii],"oauth_consumer_key=",19)) {
-          if (!op.c_key) continue;
-          if (strcmp(&(myargv[ii][19]),op.c_key)) {
-            exitval|=4;
-            if (!want_quiet) 
-              fprintf(stderr, "Note: consumer key mismatch.\n");
-          } else flags|=1;
-        }
-        if (!strncmp(myargv[ii],"oauth_token=",12)) {
-          if (!op.t_key) continue;
-          if (strcmp(&(myargv[ii][12]),op.t_key)) {
-            exitval|=8;
-            if (!want_quiet) 
-              fprintf(stderr, "Note: token mismatch.\n");
-          } else flags|=2;
-        }
+      if (!strncmp(myargv[ii],"oauth_token=",12)) {
+        if (!op.t_key) continue;
+        if (strcmp(&(myargv[ii][12]),op.t_key)) {
+          exitval|=8;
+          if (!want_quiet) 
+            fprintf(stderr, "Note: token mismatch.\n");
+        } else flags|=2;
       }
-      if (flags != ((op.t_key?2:0)|(op.c_key?1:0))) {
-        if (exitval==0 && !want_quiet) 
-          fprintf(stderr, "Note: required token not found\n");
-        exitval|=16;
+      if (!strncmp(myargv[ii],"oauth_signature_method=",23)) {
+        if(parse_oauth_method(&op, &(myargv[ii][23]))) {
+          if (!want_quiet && !no_warnings) 
+            fprintf(stderr, "Warning: Can not parse signature method.\n");
+          exit(2); // XXX
+        }
       }
     }
-    free_array(myargc,myargv);
+    if (flags != ((op.t_key?2:0)|(op.c_key?1:0))) {
+      if (exitval==0 && !want_quiet) 
+        fprintf(stderr, "Note: required token not found\n");
+      exitval|=16;
+    }
+    if (0 && signature_method != op.signature_method) {
+      ; // TODO: compare only if '-m' was given.
+    }
   }
 
+  // compare wanted_sign and sign .. 
   if (!sign) {
-    exitval|=1;
+    exitval|=64;
     if (!no_warnings && !want_quiet) 
       fprintf(stderr,"WARNING: could not generate oAuth signature.\n");
   } else {
@@ -361,12 +356,19 @@ int main (int argc, char **argv) {
       fprintf(stderr, "got:    '%s'\n", sign);
     }
     if (strcmp(sign, wanted_sign)) {
-      exitval|=2;
+      exitval|=128;
       if (!want_quiet && !no_warnings) 
         fprintf(stderr, "WARNING: signatures mismatch.\n");
-    } else if (!want_quiet || want_verbose) printf("good signature.\n");
+    } else if (!want_quiet || want_verbose) fprintf(stderr, "good signature.\n");
   }
 
+  if (exitval==0 && !want_quiet) {
+    if (sign) add_kv_to_array(&myargc, &myargv, "oauth_signature", sign);
+    format_array(2, myargc, myargv);
+  }
+
+  if (sign) free(sign);
+  free_array(myargc,myargv);
   free_array(oauth_argc, oauth_argv);
   return (exitval);
 }
