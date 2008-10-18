@@ -123,7 +123,7 @@ int save_keyfile(char *fn, oauthparam *op) {
     }
   //... url ?!
   fclose(f);
-  return(-1);
+  return(0);
 }
 
 /* vim: set sw=2 ts=2 sts=2 et : */
