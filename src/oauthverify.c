@@ -82,7 +82,7 @@ static struct option const long_options[] =
   {"CS", required_argument, 0, 'C'},
   {"TK", required_argument, 0, 't'},
   {"TS", required_argument, 0, 'T'},
-  {"signature-method", no_argument, 0, 'm'}, //  oauth signature method
+//{"signature-method", no_argument, 0, 'm'}, //  oauth signature method
 
   {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
   {"post", no_argument, 0, 'p'},
@@ -111,7 +111,7 @@ static int decode_switches (int argc, char **argv) {
 			   "p" 	/* post */
 			   "d:" /* URL-query parameter data eg.
                * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
-			   "m:" /* oauth signature Method */
+		//   "m:" /* oauth signature Method */
 
 			   "c:" /* consumer-key*/
 			   "C:" /* consumer-secret */
@@ -181,9 +181,9 @@ static int decode_switches (int argc, char **argv) {
       case 'e':
         reset_oauth_token(&op);
         break;
-      case 'm':
-        if (parse_oauth_method(&op, optarg)) usage(1);
-        break;
+  //  case 'm':
+  //    if (parse_oauth_method(&op, optarg)) usage(1);
+  //    break;
       case 'h':
         usage (0);
 
@@ -239,6 +239,7 @@ int main (int argc, char **argv) {
   int i;
   int exitval=0;
   char *sign = NULL;
+  char *wanted_sign = NULL;
 
   // initialize 
 
@@ -255,7 +256,7 @@ int main (int argc, char **argv) {
   if (argc>i) usage(EXIT_FAILURE);
 
   // do the work.
-  char *wanted_sign = NULL;
+ 
   // search op.URL and oauth_argv for 'oauth_signature' 
   {
     char *start, *end;
@@ -285,12 +286,28 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
+
   { // recalculate signature.
     int myargc=0;
     char **myargv = NULL;
     url_to_array(&myargc, &myargv, mode, op.url);
     append_parameters(&myargc, &myargv, oauth_argc, oauth_argv);
+
+    { // parse signature_method 
+      int ii;
+      for (ii=0;ii<myargc;ii++) {
+        if (!strncmp(myargv[ii],"oauth_signature_method=",23)) {
+          if(parse_oauth_method(&op, &(myargv[ii][23]))) {
+            if (!want_quiet) fprintf(stderr, "can not parse signature method.\n");
+            exit(1); // XXX
+          }
+        }
+      }
+      // TODO: compare with '-m'  ?!
+    }
+    
     sign=process_array(myargc, myargv, mode, &op);
+
     { // if not NULL: compare op.c_key with consumer_key and similar op.t_key.
       int ii;
       int flags=0;
