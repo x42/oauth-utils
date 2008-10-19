@@ -26,10 +26,14 @@ ACT="access_token.php"
 TST="echo_api.php"
 TSQ="?method=foo%20bar&bar=baz"
 
-#TODO: make these configfiles to be sourced
+#TODO: make these into config files and different tests.
 if [ 1 == 0 ]; then     # test PLAINTEXT signature
   OPT="-m PLAINTEXT"
 elif [ 1 == 0 ]; then   # test RSA-SHA1 signature
+# NOTE: the way RSA-keys are passed to oauthsign
+# will change in the future.
+# so far oauthsign want a public key as CONSUMER SECRET
+# and oauthverfiy expects a private key..
   OPT="-v -m RSA-SHA1"
   CONSEC="-----BEGIN PRIVATE KEY-----
 MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALRiMLAh9iimur8V

@@ -11,3 +11,4 @@ TODO:
 * ask before overwriting data-file (allow it it's empty or can be parsed)
 * add support for PUT,DELETE,HEAD? requests (liboauth)
 * add "dump-signature-only(and exit)" mode|=64
+* oauthverify: allow to require method from -f  (method_set) and clear it
