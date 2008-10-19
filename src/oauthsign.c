@@ -49,6 +49,10 @@ enum {DUMMY_CODE=129
      ,DRYRUN_CODE
      ,NOWARN_CODE
      ,CURLOUT_CODE
+     ,NULLCK_CODE
+     ,NULLCS_CODE
+     ,NULLTK_CODE
+     ,NULLTS_CODE
 };
 
 /* Option flags and variables */
@@ -97,6 +101,10 @@ static struct option const long_options[] =
   {"CS", required_argument, 0, 'C'},
   {"TK", required_argument, 0, 't'},
   {"TS", required_argument, 0, 'T'},
+  {"erase-consumer-key", no_argument, 0, NULLCK_CODE},
+  {"erase-consumer-secret", no_argument, 0, NULLCS_CODE},
+  {"erase-token-key", no_argument, 0, NULLTK_CODE},
+  {"erase-token-secret", no_argument, 0, NULLTS_CODE},
   {"signature-method", no_argument, 0, 'm'}, //  oauth signature method
 
   {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
@@ -234,6 +242,22 @@ static int decode_switches (int argc, char **argv) {
         break;
       case 'E':
         reset_oauth_param(&op);
+        break;
+      case NULLCK_CODE:	/* --erase-consumer-key */
+        if (op.c_key) free(op.c_key);
+        op.c_key=NULL;
+        break;
+      case NULLCS_CODE:	/* --erase-consumer-secret */
+        if (op.c_secret) free(op.c_secret);
+        op.c_secret=NULL;
+        break;
+      case NULLTK_CODE:	/* --erase-token-key */
+        if (op.t_key) free(op.t_key);
+        op.t_key=NULL;
+        break;
+      case NULLTS_CODE:	/* --erase-token-secret */
+        if (op.t_secret) free(op.t_secret);
+        op.t_secret=NULL;
         break;
       case 'G':
         print_as_get=1;

@@ -47,6 +47,10 @@ char *program_name;
 /* getopt_long return codes */
 enum {DUMMY_CODE=129
      ,NOWARN_CODE
+     ,NULLCK_CODE
+     ,NULLCS_CODE
+     ,NULLTK_CODE
+     ,NULLTS_CODE
 };
 
 /* Option flags and variables */
@@ -67,6 +71,8 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit8 (256):  escape POST parameters with format_array(..)
                       //  bit9 (512):  curl-output
                       //
+
+int   method_set = 0;   // compare signature-method
 int   oauth_argc = 0;
 char **oauth_argv = NULL;
 char *datafile   = NULL;
@@ -89,6 +95,10 @@ static struct option const long_options[] =
   {"CS", required_argument, 0, 'C'},
   {"TK", required_argument, 0, 't'},
   {"TS", required_argument, 0, 'T'},
+  {"erase-consumer-key", no_argument, 0, NULLCK_CODE},
+  {"erase-consumer-secret", no_argument, 0, NULLCS_CODE},
+  {"erase-token-key", no_argument, 0, NULLTK_CODE},
+  {"erase-token-secret", no_argument, 0, NULLTS_CODE},
 //{"signature-method", no_argument, 0, 'm'}, //  oauth signature method
 
   {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
@@ -118,7 +128,7 @@ static int decode_switches (int argc, char **argv) {
 			   "p" 	/* post */
 			   "d:" /* URL-query parameter data eg.
                * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
-		//   "m:" /* oauth signature Method */
+		     "m:" /* oauth signature Method */
 
 			   "c:" /* consumer-key*/
 			   "C:" /* consumer-secret */
@@ -191,9 +201,26 @@ static int decode_switches (int argc, char **argv) {
       case 'e':
         reset_oauth_token(&op);
         break;
-  //  case 'm':
-  //    if (parse_oauth_method(&op, optarg)) usage(1);
-  //    break;
+      case NULLCK_CODE:	/* --erase-consumer-key */
+        if (op.c_key) free(op.c_key);
+        op.c_key=NULL;
+        break;
+      case NULLCS_CODE:	/* --erase-consumer-secret */
+        if (op.c_secret) free(op.c_secret);
+        op.c_secret=NULL;
+        break;
+      case NULLTK_CODE:	/* --erase-token-key */
+        if (op.t_key) free(op.t_key);
+        op.t_key=NULL;
+        break;
+      case NULLTS_CODE:	/* --erase-token-secret */
+        if (op.t_secret) free(op.t_secret);
+        op.t_secret=NULL;
+        break;
+      case 'm':
+        if (parse_oauth_method(&op, optarg)) usage(1);
+        method_set=1;
+        break;
       case 'h':
         usage (0);
 
@@ -340,8 +367,10 @@ int main (int argc, char **argv) {
         fprintf(stderr, "Note: required token not found\n");
       exitval|=16;
     }
-    if (0 && signature_method != op.signature_method) {
-      ; // TODO: compare only if '-m' was given.
+    if (method_set && signature_method != op.signature_method) {
+      if (exitval==0 && !want_quiet) 
+        fprintf(stderr, "Note: signature method differs from requirement.\n");
+      exitval|=32;
     }
   }
 

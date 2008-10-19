@@ -11,10 +11,11 @@ TODO:
 * allow to read _all_ parameters from file similar to curl '-d @<file-name>'
   --data-binary, --data-ascii (unescape params as '-f' does)
 * ask before overwriting data-file (allow it it's empty or can be parsed)
+! add --clear-token-key, --clear-token-secret, --clear-consumer-* opts.
 
 oauthverify:
-* compare signature-method
-* allow to erase keys (when secrets are read from file) 
+! compare signature-method
+! allow to erase keys (when secrets are read from file) 
   -> don't compare consumer-key, token-key mode
 * dump parsed parameters in a nice way -> link to DB
   (have s.o. else compare the parameters)
