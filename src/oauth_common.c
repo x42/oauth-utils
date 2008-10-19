@@ -306,7 +306,7 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
 
   switch(op->signature_method) {
     case OA_RSA:
-      sign = oauth_sign_rsa_sha1(odat,op->c_secret); // XXX don't re-use consumer-key; allow to read from file.
+      sign = oauth_sign_rsa_sha1(odat,op->c_secret); // TODO don't re-use consumer-key; allow to read from file.
     	break;
     case OA_PLAINTEXT:
       sign = oauth_sign_plaintext(odat,okey);
@@ -317,7 +317,7 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
   free(odat); 
   free(okey);
   if (mode&64 && !want_verbose) fprintf(stdout, "%s\n",sign); 
-  //if (mode&64) exit(0); // XXX
+  //if (mode&64) exit(0); // TODO
   return sign; // needs to be free()d
 }
 

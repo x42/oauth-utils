@@ -57,7 +57,7 @@ enum {DUMMY_CODE=129
 
 /* Option flags and variables */
 
-int no_warnings  = 0; /* --no-warn */ // TODO 
+int no_warnings  = 0; /* --no-warn */
 int want_quiet   = 0; /* --quiet, --silent */
 int want_verbose = 0; /* --verbose */
 int want_dry_run = 0; /* --dry-run */
@@ -109,15 +109,15 @@ static struct option const long_options[] =
 
   {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
   {"post", no_argument, 0, 'p'},
-//{"escape-post-param", no_argument, 0, 'P'}, // TODO: rename ''--print-escaped''
-  {"curl", no_argument, 0, CURLOUT_CODE}, // TODO: rename '--print-curl'
+//{"toggle-escape", no_argument, 0, 'P'}, // TODO: rename ''--print-escaped'' ?!
+  {"curl", no_argument, 0, CURLOUT_CODE}, 
   {"data", required_argument, 0, 'd'},
   {"base-url", no_argument, 0, 'B'},
   {"base-string", no_argument, 0, 'b'},
 
   {"file", required_argument, 0, 'f'},
   {"write", no_argument, 0, 'w'}, 
-//{"writefile", required_argument, 0, 'F'}, 
+//{"writefile", required_argument, 0, 'F'},  // TODO 
 //{"execute", no_argument, 0, 'x'}, 
 //{"oauthrequest", no_argument, 0, 'X'}, 
   {NULL, 0, NULL, 0}
@@ -142,7 +142,7 @@ static int decode_switches (int argc, char **argv) {
                * '-d name=daniel -d skill=lousy'->'name=daniel&skill=lousy' */
 			   "m:" /* oauth signature Method */
 			   "P" 	/* print escaped post parameters */
-			   "G" 	/* always print as (escaped) GET parameters */ // FIXME: 'g' 'G' 'P' modifiers
+			   "G" 	/* always print as GET parameters */
 
 			   "c:" /* consumer-key*/
 			   "C:" /* consumer-secret */
@@ -400,7 +400,7 @@ int main (int argc, char **argv) {
 
   if (want_write && !want_dry_run) { // save current state
     if (save_keyfile(datafile, &op)) {
-      want_write=0; // XXX 
+      want_write=0;
       if (!no_warnings)
         fprintf(stderr, "WARNING: saving state to file '%s' failed.\n", datafile);
     } else if (want_verbose) {

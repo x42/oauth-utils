@@ -55,7 +55,7 @@ enum {DUMMY_CODE=129
 
 /* Option flags and variables */
 
-int no_warnings  = 0; /* --no-warn */ // TODO 
+int no_warnings  = 0; /* --no-warn */ 
 int want_quiet   = 0; /* --quiet, --silent */
 int want_verbose = 0; /* --verbose */
 
@@ -381,7 +381,7 @@ int main (int argc, char **argv) {
         if(parse_oauth_method(&op, &(myargv[ii][23]))) {
           if (!want_quiet && !no_warnings) 
             fprintf(stderr, "Warning: Can not parse signature method.\n");
-          exit(2); // XXX
+          exitval|=2;
         }
       }
     }
