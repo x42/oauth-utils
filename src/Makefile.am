@@ -5,8 +5,8 @@ COMMON_SOURCES=\
 
 oauthsign_SOURCES=oauthsign.c ${COMMON_SOURCES}
 oauthsign_CFLAGS=
-oauthsign_LDADD=-loauth
+oauthsign_LDADD=@OAUTH_LIBS@
 
 oauthverify_SOURCES=oauthverify.c ${COMMON_SOURCES}
 oauthverify_CFLAGS=
-oauthverify_LDADD=-loauth
+oauthverify_LDADD=@OAUTH_LIBS@

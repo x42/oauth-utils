@@ -45,5 +45,6 @@ PKG_CHECK_MODULES(OAUTH, oauth, HAVE_OAUTH=yes,
 	Could not find liboauth. please update PKG_CONFIG_PATH to 
 	point the path where liboauth installed it's .pc files.
 	])) 
+AC_SUBST(OAUTH_LIBS)
 
 AC_OUTPUT(Makefile src/Makefile oauth-utils.lsm oauth-utils.spec)
