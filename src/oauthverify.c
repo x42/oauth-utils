@@ -332,10 +332,29 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
+
   // recalculate signature.
   url_to_array(&myargc, &myargv, mode, op.url);
   append_parameters(&myargc, &myargv, oauth_argc, oauth_argv);
   sign=process_array(myargc, myargv, mode, &op);
+
+  // check if all required oauth params are present
+	if (!oauth_param_exists(myargc, myargv,"oauth_nonce")) {
+    exitval|=256;
+    if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_nonce'.\n");
+  }
+	if (!oauth_param_exists(myargc, myargv,"oauth_timestamp")) {
+    exitval|=256;
+    if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_timestamp'.\n");
+  }
+	if (!oauth_param_exists(myargc, myargv,"oauth_consumer_key")) {
+    exitval|=256;
+    if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_consumer_key'.\n");
+  }
+	if (!oauth_param_exists(myargc, myargv,"oauth_signature_method")) {
+    exitval|=256;
+    if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_signature_method'.\n");
+  }
 
   if (1) { // require op.c_key to match consumer_key and similar op.t_key and method
     OAuthMethod signature_method = op.signature_method; // remember wanted-method
@@ -367,7 +386,7 @@ int main (int argc, char **argv) {
       }
     }
     if (flags != ((op.t_key?2:0)|(op.c_key?1:0))) {
-      if (exitval==0 && !want_quiet) 
+      if ((exitval&12)==0 && !want_quiet) 
         fprintf(stderr, "Note: required token not found\n");
       exitval|=16;
     }
