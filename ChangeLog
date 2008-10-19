@@ -1,3 +1,9 @@
+2008-10-19  Robin Gareus  <robin@gareus.org>
+	* version 0.2.1
+	* added oauthverify
+	* updated man-pages
+	* reworked output (stdout/stderr)
+
 2008-10-17  Robin Gareus  <robin@gareus.org>
 	* version 0.2.0
 	* escape parameters when saving keyfile
