@@ -28,6 +28,8 @@ typedef struct {
   char *t_secret; //< token secret (or NULL)
   OAuthMethod signature_method; //< enum 
 //char *request_method;   //< GET, POST, PUT, 
+//char *rsa_pub;   //< public key -- used for signing
+//char *rsa_key;   //< secret key -- used for verify
 } oauthparam;
 
 // common oauth functions

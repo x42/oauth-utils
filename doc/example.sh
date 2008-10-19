@@ -26,6 +26,7 @@ ACT="access_token.php"
 TST="echo_api.php"
 TSQ="?method=foo%20bar&bar=baz"
 
+#TODO: make these configfiles to be sourced
 if [ 1 == 0 ]; then     # test PLAINTEXT signature
   OPT="-m PLAINTEXT"
 elif [ 1 == 0 ]; then   # test RSA-SHA1 signature
