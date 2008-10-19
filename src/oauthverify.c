@@ -339,19 +339,19 @@ int main (int argc, char **argv) {
   sign=process_array(myargc, myargv, mode, &op);
 
   // check if all required oauth params are present
-	if (!oauth_param_exists(myargc, myargv,"oauth_nonce")) {
+	if (!oauth_param_exists(myargv, myargc,"oauth_nonce")) {
     exitval|=256;
     if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_nonce'.\n");
   }
-	if (!oauth_param_exists(myargc, myargv,"oauth_timestamp")) {
+	if (!oauth_param_exists(myargv, myargc,"oauth_timestamp")) {
     exitval|=256;
     if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_timestamp'.\n");
   }
-	if (!oauth_param_exists(myargc, myargv,"oauth_consumer_key")) {
+	if (!oauth_param_exists(myargv, myargc,"oauth_consumer_key")) {
     exitval|=256;
     if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_consumer_key'.\n");
   }
-	if (!oauth_param_exists(myargc, myargv,"oauth_signature_method")) {
+	if (!oauth_param_exists(myargv, myargc,"oauth_signature_method")) {
     exitval|=256;
     if (!want_quiet) fprintf(stderr, "Note: missing require parameter 'oauth_signature_method'.\n");
   }
