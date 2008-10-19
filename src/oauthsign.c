@@ -318,9 +318,13 @@ Options:\n\
   -x                          make HTTP request and return the replied content\n\
   -X                          make HTTP request and parse the reply for tokens\n\
                               use '-X -w' to request and store tokens.\n\
-  -e, --erase-token           clear [access|request] tokens.\n\
-  -E, --erase-all             wipe all tokens and reset method to HMAC-SHA1.\n\
   --dry-run                   take no real actions (with -x, -w or -X)\n\
+  -e, --erase-tokens          clear [access|request] tokens.\n\
+  -E, --erase-all             wipe all tokens and reset method to HMAC-SHA1.\n\
+  --erase-consumer-key        unset consumer-key\n\
+  --erase-consumer-secret     unset consumer-secret\n\
+  --erase-token-key           unset token-key\n\
+  --erase-token-secret        unset token-secret\n\
   \n\
   The position of parameters -d, -f, -F, -e, -E and all tokens matters!\n\
   \n\

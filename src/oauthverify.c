@@ -266,7 +266,11 @@ Options:\n\
   -T, --TS, --token-secret    <text> - set token secret\n\
   \n\
   -f, --file <filename>       read tokens and secrets from config-file\n\
-  -e, --erase-token           clear [access|request] tokens.\n\
+  -e, --erase-tokens          clear [access|request] tokens.\n\
+  --erase-consumer-key        unset consumer-key\n\
+  --erase-consumer-secret     unset consumer-secret\n\
+  --erase-token-key           unset token-key\n\
+  --erase-token-secret        unset token-secret\n\
   \n\
 "));
   exit (status);

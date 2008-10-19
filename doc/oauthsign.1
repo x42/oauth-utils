@@ -77,58 +77,79 @@ Show summary of options.
 Show version of program.
 .TP
 .B \-b, \-\-base-string
-print OAuth base-string and exit.
+Print OAuth base-string and exit.
 .TP
 .B \-B, \-\-base-url
-print OAuth base-URL and exit.
+Print OAuth base-URL and exit.
 .TP
 .B \-r, \-\-request <type>
-set the HTTP request type (POST, GET [default]).
+Set the HTTP request type (POST, GET [default]).
 .TP
 .B \-p, \-\-post
-same as '-r POST'
+Same as '-r POST'
 .TP
 .B \-d, \-\-data <key>[=<value>]
-add key=value URL query parameters.
+Add key=value URL query parameters.
 .TP
 .B \-m, \-\-signature-method <method>
-specify the oauth signature method (PLAINTEXT, RSA-SHA1, HMAC-SHA1 [default]).
+Specify the oauth signature method (PLAINTEXT, RSA-SHA1, HMAC-SHA1 [default]).
 .TP
 .B \-c, \-\-CK, \-\-consumer-key <text>
-set consumer-key.
+Set consumer-key.
 .TP
 .B \-C, \-\-CS, \-\-consumer-secret <text>
-set consumer-secret.
+Set consumer-secret.
 .TP
 .B \-t, \-\-TK, \-\-token-key <text>
-set token-key.
+Set token-key.
 .TP
 .B \-T, \-\-TS, \-\-token-secret <text>
-set token-secret.
+Set token-secret.
 .TP
 .B \-f, \-\-file <filename>
-read tokens and secrets from config-file.
+Read tokens and secrets from config-file.
 .TP
 .B \-w
-write tokens to config-file.
+Write tokens to config-file.
 .TP
 .B \-F <filename>
-set config-file name w/o reading the file. useful for writing to a different file than reading eg. '-f file1 -F file2 -w'
+Set config-file name w/o reading the file. useful for writing to a different file than reading eg. '-f file1 -F file2 -w'
 .TP
 .B \-x
-make HTTP request and return the replied content.
+Make HTTP request and return the replied content.
 .TP
 .B \-X
-make HTTP request and parse the reply for tokens.
-.TP
-.B \-e, \-\-erase-token
-clear the [access|request] token (key&secret).
-.TP
-.B \-E, \-\-erase-all
-wipe consumer and token information and reset signature method to HMAC-SHA1.
+Make HTTP request and parse the reply for tokens.
 .TP
 .B \-\-dry-run
-take no real actions (with -x, -w or -X)
+Take no real actions (with -x, -w or -X)
+.TP
+.B \-e, \-\-erase-token
+Clear the [access|request] token (key&secret).
+.TP
+.B \-E, \-\-erase-all
+Wipe consumer and token information and reset signature method to HMAC-SHA1.
+.TP
+.B \-\-erase-consumer-key
+Unset the required consumer-key (don't require a specific consumer-key for the validation to succeed)
+.TP
+.B \-\-erase-consumer-secret
+Unset the consumer-secret
+.TP
+.B \-\-erase-consumer-key
+Unset the required token-key (any token will validate)
+.TP
+.B \-\-erase-token-secret
+Unset the token-secret
+.TP
+.B \-\-G
+Print the request-parameters as url-encoded string according to RFC3986, even if the POST method was choosen.
+.TP
+.B \-\-P
+Toggle parameter escaping for output. with -P, POST params will be escaped and GET parameter won't. This is non-standard behaviour.
+.TP
+.B \-\-curl
+Output a curl commandline. (not with -x or -X)
 .PP
 The position of parameters -d, -f, -F, -e, -E and all tokens matters!
 Tokens are read from file at the moment the -f option is parsed overriding

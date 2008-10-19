@@ -56,8 +56,18 @@ oauthverify \- oauth command line tool
 .PP
 \fBoauthverify\fP does \fInot\fP keep track of consumers, token mappings and
 nonce (never more than once) identifiers. You can not build an oauth-server 
-(service-provider) with it; however you can use it within other software to 
-do so, or simply see this as a handy tool to debug signature verification.
+(service-provider) with it. However you can use it within other software to 
+do so, or simply use this as a tool to debug signature verification.
+.PP
+\fBoauthverify\fP parses all query-parameters (appended to the URL) or given
+with '-d' one of which must be a oauth_signature.
+To recaluclate the signature the consumer and token secrets must be specified,
+if a consumer-key or consumer-token are given, they're required to match the
+ones in the parsed request-parameters.
+.PP
+If the signature is correct and if the consumer/token key matches the given
+ parameters (if any) oauthverify exits with a status code indicating success
+and prints the parsed request-parameters.
 .SH OPTIONS
 \fBoauthsign\fP accepts the following options:
 .TP
@@ -77,40 +87,52 @@ Show summary of options.
 Show version of program.
 .TP
 .B \-b, \-\-base-string
-print OAuth base-string and exit.
+Print OAuth base-string and exit.
 .TP
 .B \-B, \-\-base-url
-print OAuth base-URL and exit.
+Print OAuth base-URL and exit.
 .TP
 .B \-r, \-\-request <type>
-set the HTTP request type (POST, GET [default]).
+Set the HTTP request type (POST, GET [default]).
 .TP
 .B \-p, \-\-post
-same as '-r POST'
+Same as '-r POST'
 .TP
 .B \-d, \-\-data <key>[=<value>]
-add key=value URL query parameters.
+Add key=value URL query parameters.
 .TP
 .B \-m, \-\-signature-method <method>
-require the request method to be <method> (PLAINTEXT, RSA-SHA1, HMAC-SHA1). default: use the method specified in the request parameters
+Require the request method to be <method> (PLAINTEXT, RSA-SHA1, HMAC-SHA1). default: use the method specified in the request parameters
 .TP
 .B \-c, \-\-CK, \-\-consumer-key <text>
-require this consumer-key to be present as request parameter.
+Require this consumer-key to be present as request parameter.
 .TP
 .B \-C, \-\-CS, \-\-consumer-secret <text>
-set consumer-secret.
+Set consumer-secret.
 .TP
 .B \-t, \-\-TK, \-\-token-key <text>
-require this oauth token to be present as request parameter.
+Require this oauth token to be present as request parameter.
 .TP
 .B \-T, \-\-TS, \-\-token-secret <text>
-set token-secret.
+Set token-secret.
 .TP
 .B \-f, \-\-file <filename>
-read tokens and secrets from config-file.
+Read tokens and secrets from config-file.
 .TP
 .B \-e, \-\-erase-token
-clear the [access|request] token (key&secret).
+Clear the [access|request] token (key&secret).
+.TP
+.B \-\-erase-consumer-key
+Unset the required consumer-key (don't require a specific consumer-key for the validation to succeed)
+.TP
+.B \-\-erase-consumer-secret
+Unset the consumer-secret
+.TP
+.B \-\-erase-consumer-key
+Unset the required token-key (any token will validate)
+.TP
+.B \-\-erase-token-secret
+Unset the token-secret
 .PP
 The position of parameters -d, -f, -e, and all tokens matters!
 .SH EXAMPLE
