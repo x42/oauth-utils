@@ -8,7 +8,7 @@ Homepage: http://mir.dnsalias.com/oss/oauth/start
 
 Package: oauth-utils
 Architecture: any
-Depends: liboauth, ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: curl
 Description: command line utilities for oauth
  command line oAuth consumer in the style of curl
