@@ -1,7 +1,7 @@
 /* 
    oauthsign - command line oauth
 
-   Copyright (C) 2008 Robin Gareus
+   Copyright (C) 2008, 2009 Robin Gareus
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -407,6 +407,13 @@ int main (int argc, char **argv) {
       fprintf(stderr, "saved state to %s\n", datafile);
     }
   }
+
+#if 0
+        add_param_to_array(&oauth_argc, &oauth_argv,"oauth_callback=oob"); // request Request-token - 1.0a
+        // if not "oob" and version 1.0a -> check if SP returns "oauth_callback_confirmed=true"
+ 
+        add_param_to_array(&oauth_argc, &oauth_argv,"oauth_verifier=XXX"); // request Access-token - 1.0a
+#endif
   
   sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
 
