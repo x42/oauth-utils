@@ -175,20 +175,25 @@ int oauthsign_alt (int mode, oauthparam *op) {
  */
 int parse_reply(const char *reply, char **token, char **secret) {
   int rc;
-  int ok=-1; // error
+  int ok=0; // error
   char **rv = NULL;
   rc = oauth_split_url_parameters(reply, &rv);
-  //if (rc>0)
-  qsort(rv, rc, sizeof(char *), oauth_cmpstringp);
-  if( rc>=2 
-      && !strncmp(rv[0],"oauth_token=",11)
-      && !strncmp(rv[1],"oauth_token_secret=",18) ) {
-    ok=0;
-    if (token)  *token = (char*) xstrdup(&(rv[0][12]));
-    if (secret) *secret= (char*) xstrdup(&(rv[1][19]));
+//qsort(rv, rc, sizeof(char *), oauth_cmpstringp);
+  if( rc>=2 ) {
+    int i;
+    for (i=0; i<rc; i++) {
+      if (token && !strncmp(rv[i],"oauth_token=",12)) {
+        *token = (char*) xstrdup(&(rv[i][12]));
+        ok|=1;
+      }
+      if (secret && !strncmp(rv[i],"oauth_token_secret=",19) ) {
+        *secret= (char*) xstrdup(&(rv[i][19]));
+        ok|=2;
+      }
+    }
   }
   if(rv) free(rv);
-  return ok;
+  return ok==3?0:-1;
 }
 
 /**
