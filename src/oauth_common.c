@@ -207,10 +207,8 @@ int url_to_array(int *argcp, char ***argvp, const int mode, const char *url) {
     (*argcp) = oauth_split_post_paramters(url, argvp, 2); // bit0(1): replace '+', bit1(2): don't replace '\001' -> '&'
   else if ((mode&2) == 0) // GET
     (*argcp) = oauth_split_url_parameters(url, argvp);  // same as oauth_split_post_paramters(url, &argv, 1);
-  else { // TODO: add support for PUT, DELETE, etc
-    if (!no_warnings)
-      fprintf(stderr, "WARNING: don't know how to parse this request.\n");
-    (*argcp) = 0;
+  else {
+    (*argcp) = oauth_split_url_parameters(url, argvp);  // same as oauth_split_post_paramters(url, &argv, 1);
   }
   return (*argcp);
 }
@@ -285,7 +283,7 @@ void append_parameters(int *dest_argcp, char ***dest_argvp, int src_argc, char *
  * @return encoded string otherwise NULL
  * The caller must free the returned string.
  */
-char *process_array(int argc, char **argv, int mode, oauthparam *op) {
+char *process_array(int argc, char **argv, char *method, int mode, oauthparam *op) {
   char *base_url;
   char *okey, *odat, *sign;
 
@@ -300,7 +298,7 @@ char *process_array(int argc, char **argv, int mode, oauthparam *op) {
 
   // generate signature
   okey = oauth_catenc(2, op->c_secret, op->t_secret);
-  odat = oauth_catenc(3, mode&2?"POST":"GET", argv[0], base_url); // TODO: add support for PUT, DELETE ...
+  odat = oauth_catenc(3, method, argv[0], base_url);
 
   if (mode&8)            fprintf(stdout, "%s\n",odat);
   else if (want_verbose) fprintf(stderr, "base-string=%s\n",odat);
@@ -352,7 +350,7 @@ void add_oauth_params_to_array (int *argcp, char ***argvp, oauthparam *op) {
 }
 
 // basically oauth_sign_url() from liboauth in steps..
-char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int *saveargcp, char ***saveargvp) {
+char *oauthsign_ext (int mode, char *method, oauthparam *op, int optargc, char **optargv, int *saveargcp, char ***saveargvp) {
   int argc=0;
   char **argv = NULL;
   char *sign=NULL;
@@ -365,7 +363,7 @@ char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int 
     append_parameters(saveargcp, saveargvp, argc, argv);
   }
 
-  sign=process_array(argc, argv, mode, op);
+  sign=process_array(argc, argv, method, mode, op);
   free_array(argc,argv);
   return (sign); // needs to be free()d.
 
@@ -438,8 +436,8 @@ void format_array(int mode, int argc, char **argv) {
   }
 }
 
-char *oauthsign (int mode, oauthparam *op) {
-  return oauthsign_ext(mode, op, 0, NULL, NULL, NULL);
+char *oauthsign (int mode, char *method, oauthparam *op) {
+  return oauthsign_ext(mode, method, op, 0, NULL, NULL, NULL);
 }
 
 // basically oauth_sign_url() from liboauth in steps..

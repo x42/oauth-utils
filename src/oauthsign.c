@@ -74,6 +74,7 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit8 (256):  toggle ouput Parameter escape. (dont escape GETs and escape POST params with format_array(..)
                       //  bit9 (512):  curl-output
                       //
+char *method = "GET";
 int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
 
 int print_as_get = 0; 
@@ -192,6 +193,7 @@ static int decode_switches (int argc, char **argv) {
       case 'p':
         mode&=~(1|2);
         mode|=2;
+        method="POST";
         break;
       case 'r':
         mode&=~(1|2|4);
@@ -201,8 +203,9 @@ static int decode_switches (int argc, char **argv) {
      //   mode|=4;
         else if (!strncasecmp(optarg,"POST",4))
           mode|=2;
-        else 
-          usage (EXIT_FAILURE);
+        else
+          mode|=1; // XXX
+        method = strdup(optarg); // TODO: force to upper case
         break;
       case 't':
         if (op.t_key) free(op.t_key);
@@ -415,7 +418,7 @@ int main (int argc, char **argv) {
         add_param_to_array(&oauth_argc, &oauth_argv,"oauth_verifier=XXX"); // request Access-token - 1.0a
 #endif
   
-  sign = oauthsign_ext(mode, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
+  sign = oauthsign_ext(mode, method, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
 
   if (sign && want_verbose) 
     fprintf(stderr, "oauth_signature=%s\n", sign);

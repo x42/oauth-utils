@@ -33,8 +33,8 @@ typedef struct {
 } oauthparam;
 
 // common oauth functions
-char *oauthsign (int mode, oauthparam *op);
-char *oauthsign_ext (int mode, oauthparam *op, int optargc, char **optargv, int *saveargcp, char ***saveargvp);
+char *oauthsign (int mode, char *method, oauthparam *op);
+char *oauthsign_ext (int mode, char *method, oauthparam *op, int optargc, char **optargv, int *saveargcp, char ***saveargvp);
 //int oauthsign_alt (int mode, oauthparam *op);
 
 // HTTP API
@@ -46,7 +46,7 @@ char *oauthrequest_ext (int mode, oauthparam *op, int oauthargc, char **oautharg
 void format_array(int mode, int argc, char **argv);
 void format_array_curl(int mode, int argc, char **argv);
 void free_array(int argc, char **argv);
-char *process_array(int argc, char **argv, int mode, oauthparam *op);
+char *process_array(int argc, char **argv, char *method, int mode, oauthparam *op);
 #if 0 // private
 int url_to_array(int *argcp, char ***argvp, int mode, char *url);
 void add_param_to_array(int *argcp, char ***argvp, char *addparam);

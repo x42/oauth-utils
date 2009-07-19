@@ -71,6 +71,7 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit8 (256):  escape POST parameters with format_array(..)
                       //  bit9 (512):  curl-output
                       //
+char *method = "GET";
 
 int   method_set = 0;   // compare signature-method
 int   oauth_argc = 0;
@@ -175,7 +176,8 @@ static int decode_switches (int argc, char **argv) {
         else if (!strncasecmp(optarg,"POST",4))
           mode|=2;
         else 
-          usage (EXIT_FAILURE);
+          mode|=1; // XXX
+        method=strdup(optarg); // TODO force to uppercase
         break;
       case 't':
         if (op.t_key) free(op.t_key);
@@ -336,7 +338,7 @@ int main (int argc, char **argv) {
   // recalculate signature.
   url_to_array(&myargc, &myargv, mode, op.url);
   append_parameters(&myargc, &myargv, oauth_argc, oauth_argv);
-  sign=process_array(myargc, myargv, mode, &op);
+  sign=process_array(myargc, myargv, method, mode, &op);
 
   // check if all required oauth params are present
 	if (!oauth_param_exists(myargv, myargc,"oauth_nonce")) {
