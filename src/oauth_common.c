@@ -173,10 +173,11 @@ int oauthsign_alt (int mode, oauthparam *op) {
  * split and parse URL parameters replied by a oauth-server
  * into <em>oauth_token</em> and <em>oauth_token_secret</em>.
  */
-int parse_reply(const char *reply, char **token, char **secret) {
+int parse_reply(const char *reply, char **token, char **secret, int *flags) {
   int rc;
   int ok=0; // error
   char **rv = NULL;
+  if (flags) *flags=0;
   rc = oauth_split_url_parameters(reply, &rv);
 //qsort(rv, rc, sizeof(char *), oauth_cmpstringp);
   if( rc>=2 ) {
@@ -189,6 +190,9 @@ int parse_reply(const char *reply, char **token, char **secret) {
       if (secret && !strncmp(rv[i],"oauth_token_secret=",19) ) {
         *secret= (char*) xstrdup(&(rv[i][19]));
         ok|=2;
+      }
+      if (strcmp(rv[i],"oauth_callback_confirmed=true") ) {
+        if (flags) *flags|=1;
       }
     }
   }

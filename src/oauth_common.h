@@ -38,7 +38,7 @@ char *oauthsign_ext (int mode, char *method, oauthparam *op, int optargc, char *
 //int oauthsign_alt (int mode, oauthparam *op);
 
 // HTTP API
-int parse_reply(const char *reply, char **token, char **secret);
+int parse_reply(const char *reply, char **token, char **secret, int *flags);
 //int oauthrequest (int mode, oauthparam *op); // outdated
 char *oauthrequest_ext (int mode, oauthparam *op, int oauthargc, char **oauthargv, char *sign);
 

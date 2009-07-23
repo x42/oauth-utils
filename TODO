@@ -9,7 +9,6 @@ TODO:
 * allow to read _all_ parameters from file similar to curl '-d @<file-name>'
   --data-binary, --data-ascii (unescape params as '-f' does)
 * ask before overwriting data-file (allow it it's empty or can be parsed)
-* add support for PUT,DELETE,HEAD? requests (liboauth)
 * add "dump-signature-only(and exit)" mode|=64
 * oauthverify: allow to require method from -f  (method_set) and clear it
 * optionally chmod the config file upon creation. 

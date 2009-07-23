@@ -82,6 +82,8 @@ int want_write   = 0;
 int   oauth_argc = 0;
 char **oauth_argv = NULL;
 char *datafile   = NULL;
+char *callback = NULL;
+char *verifier = NULL;
 oauthparam op;
 
 static struct option const long_options[] =
@@ -102,6 +104,8 @@ static struct option const long_options[] =
   {"CS", required_argument, 0, 'C'},
   {"TK", required_argument, 0, 't'},
   {"TS", required_argument, 0, 'T'},
+  {"callback", required_argument, 0, 'a'},
+  {"verifier", required_argument, 0, 'A'},
   {"erase-consumer-key", no_argument, 0, NULLCK_CODE},
   {"erase-consumer-secret", no_argument, 0, NULLCS_CODE},
   {"erase-token-key", no_argument, 0, NULLTK_CODE},
@@ -215,6 +219,17 @@ static int decode_switches (int argc, char **argv) {
         if (op.t_secret) free(op.t_secret);
         op.t_secret=xstrdup(optarg); 
         break;
+      case 'a':
+#if 1
+        if (strlen(optarg) == 0) 
+          callback=xstrdup("oob");
+        else
+#endif
+        callback=xstrdup(optarg); 
+        break;
+      case 'A':
+        verifier=xstrdup(optarg); 
+        break;
       case 'c':
         if (op.c_key) free(op.c_key);
         op.c_key=xstrdup(optarg); 
@@ -315,6 +330,9 @@ Options:\n\
   -t, --TK, --token-key       <text> \n\
   -T, --TS, --token-secret    <text> \n\
   \n\
+  -a, --callback <url>        specify oauth_callback url (or \'oob') // 1.0 Rev A\n\
+  -A, --verifier <text>       specify oauth_verifieri // 1.0 Rev A\n\
+  \n\
   -f, --file <filename>       read tokens and secrets from config-file\n\
   -w                          write tokens to config-file\n\
   -F <filename>               set config-file name w/o reading the file.\n\
@@ -411,12 +429,14 @@ int main (int argc, char **argv) {
     }
   }
 
-#if 0
-        add_param_to_array(&oauth_argc, &oauth_argv,"oauth_callback=oob"); // request Request-token - 1.0a
-        // if not "oob" and version 1.0a -> check if SP returns "oauth_callback_confirmed=true"
+  if (callback) {
+    add_kv_to_array(&oauth_argc, &oauth_argv, "oauth_callback", callback);
+  }
  
-        add_param_to_array(&oauth_argc, &oauth_argv,"oauth_verifier=XXX"); // request Access-token - 1.0a
-#endif
+  if (verifier) { // OAuth 1.0 Rev A
+    add_kv_to_array(&oauth_argc, &oauth_argv, "oauth_verifier", verifier);
+    free(verifier);
+  }
   
   sign = oauthsign_ext(mode, method, &op, oauth_argc, oauth_argv, &oaargc, &oaargv);
 
@@ -460,17 +480,25 @@ int main (int argc, char **argv) {
 
     if (!want_dry_run && (mode&128)) {
       reset_oauth_token(&op);
-      if (parse_reply(reply, &(op.t_key), &(op.t_secret))) { 
+      int reply_flags;
+      if (parse_reply(reply, &(op.t_key), &(op.t_secret), &reply_flags)) { 
         if (!exitval || want_verbose) fprintf(stderr,"ERROR: could not parse reply.\n");
         exitval|=4;
       } else if (!want_quiet) {
         printf ("token=%s\n",op.t_key);
         printf ("token_secret=%s\n",op.t_secret);
+        if((reply_flags&1) == 1 && callback) 
+          printf ("oauth_callback_confirmed=true # -> OAuth V 1.0 Rev A\n");
       }
     }
 
     if (sign) free(sign);
     if (reply) free(reply);
+  }
+
+  if (callback) {
+    // TODO: check if SP returned "oauth_callback_confirmed=true"  -> 1.0 rev A
+    free(callback);
   }
  
   if (exitval==0 && want_write && !want_dry_run) { // save final state
