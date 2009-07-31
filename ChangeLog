@@ -1,3 +1,8 @@
+2009-07-31  Robin Gareus  <robin@gareus.org>
+	* version 0.3.0
+	* added support for GET/PUT/HEAD request (Stephen Paul Weber)
+	* commandline options for OAuth Code 1.0 Rev A
+
 2008-10-19  Robin Gareus  <robin@gareus.org>
 	* version 0.2.3
 	* added oauthverify

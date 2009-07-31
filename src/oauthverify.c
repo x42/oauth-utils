@@ -177,7 +177,8 @@ static int decode_switches (int argc, char **argv) {
           mode|=2;
         else 
           mode|=1; // XXX
-        method=strdup(optarg); // TODO force to uppercase
+          method=strdup(optarg); 
+          {int i; for (i=0;i<strlen(method);i++) method[i]=toupper(method[i]);}
         break;
       case 't':
         if (op.t_key) free(op.t_key);

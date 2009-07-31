@@ -122,7 +122,7 @@ static struct option const long_options[] =
 
   {"file", required_argument, 0, 'f'},
   {"write", no_argument, 0, 'w'}, 
-//{"writefile", required_argument, 0, 'F'},  // TODO 
+//{"writefile", required_argument, 0, 'F'}, 
 //{"execute", no_argument, 0, 'x'}, 
 //{"oauthrequest", no_argument, 0, 'X'}, 
   {NULL, 0, NULL, 0}
@@ -209,7 +209,8 @@ static int decode_switches (int argc, char **argv) {
           mode|=2;
         else
           mode|=1; // XXX
-        method = strdup(optarg); // TODO: force to upper case
+          method = strdup(optarg); 
+          {int i; for (i=0;i<strlen(method);i++) method[i]=toupper(method[i]);}
         break;
       case 't':
         if (op.t_key) free(op.t_key);
