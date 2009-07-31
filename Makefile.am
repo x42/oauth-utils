@@ -5,6 +5,7 @@ EXTRA_DIST= \
  oauth-utils.spec.in \
  doc/oauth-utils.7 \
  doc/oauthsign.1 \
+ doc/oauthverify.1 \
  doc/example.sh
 
 TESTS=doc/example.sh
