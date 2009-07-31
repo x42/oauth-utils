@@ -254,7 +254,7 @@ Options:\n\
 "/*
   --curl                      format output as `curl` commandline\n\
 */"\
-  -r, --request <type>        HTTP request type (POST, GET [default])\n\
+  -r, --request <type>        HTTP request type (HEAD, POST, GET [default],..)\n\
   -p, --post                  same as -r POST\n\
   -d, --data <key>[=<val>]    add url query parameters.\n\
   -m, --signature-method <m>  oauth signature method (PLAINTEXT,\n\
