@@ -332,7 +332,7 @@ Options:\n\
   -T, --TS, --token-secret    <text> \n\
   \n\
   -a, --callback <url>        specify oauth_callback url (or \'oob') // 1.0 Rev A\n\
-  -A, --verifier <text>       specify oauth_verifieri // 1.0 Rev A\n\
+  -A, --verifier <text>       specify oauth_verifier // 1.0 Rev A\n\
   \n\
   -f, --file <filename>       read tokens and secrets from config-file\n\
   -w                          write tokens to config-file\n\
