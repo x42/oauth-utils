@@ -110,7 +110,7 @@ static struct option const long_options[] =
   {"erase-consumer-secret", no_argument, 0, NULLCS_CODE},
   {"erase-token-key", no_argument, 0, NULLTK_CODE},
   {"erase-token-secret", no_argument, 0, NULLTS_CODE},
-  {"signature-method", no_argument, 0, 'm'}, //  oauth signature method
+  {"signature-method", required_argument, 0, 'm'}, //  oauth signature method
 
   {"request", required_argument, 0, 'r'}, // HTTP request method (GET, POST)
   {"post", no_argument, 0, 'p'},
