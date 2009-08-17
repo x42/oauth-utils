@@ -71,7 +71,7 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit8 (256):  escape POST parameters with format_array(..)
                       //  bit9 (512):  curl-output
                       //
-char *method = "GET";
+char *method;
 
 int   method_set = 0;   // compare signature-method
 int   oauth_argc = 0;
@@ -168,17 +168,22 @@ static int decode_switches (int argc, char **argv) {
       case 'p':
         mode&=~(1|2);
         mode|=2;
+        free(method); method=xstrdup("POST");
         break;
       case 'r':
         mode&=~(1|2|4);
-        if (!strncasecmp(optarg,"GET",3))
+        if (!strncasecmp(optarg,"GET",3)) {
           mode|=1;
-        else if (!strncasecmp(optarg,"POST",4))
+          free(method); method=xstrdup("GET");
+        } else if (!strncasecmp(optarg,"POST",4)) {
           mode|=2;
-        else 
+          free(method); method=xstrdup("POST");
+        } else {
+          int i;
           mode|=1; // XXX
           method=strdup(optarg); 
-          {int i; for (i=0;i<strlen(method);i++) method[i]=toupper(method[i]);}
+          for (i=0;i<strlen(method);i++) method[i]=toupper(method[i]);
+        }
         break;
       case 't':
         if (op.t_key) free(op.t_key);
@@ -293,6 +298,7 @@ int main (int argc, char **argv) {
   program_name = argv[0];
   memset(&op,0,sizeof(oauthparam));
   reset_oauth_param(&op);
+  method=xstrdup("GET");
 
   // parse command line
 
@@ -423,6 +429,7 @@ int main (int argc, char **argv) {
   }
 
   if (sign) free(sign);
+  free(method);
   free_array(myargc,myargv);
   free_array(oauth_argc, oauth_argv);
   return (exitval);

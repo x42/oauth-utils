@@ -12,3 +12,4 @@ TODO:
 * add "dump-signature-only(and exit)" mode|=64
 * oauthverify: allow to require method from -f  (method_set) and clear it
 * optionally chmod the config file upon creation. 
+* add support for oauth_body_hash (from file or stdin)

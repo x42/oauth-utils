@@ -74,7 +74,7 @@ int mode         = 1; ///< mode: 1=GET 2=POST; general operation-mode - bit code
                       //  bit8 (256):  toggle ouput Parameter escape. (dont escape GETs and escape POST params with format_array(..)
                       //  bit9 (512):  curl-output
                       //
-char *method = "GET";
+char *method;
 int request_mode = 0; ///< mode: 0=print info only; 1:perform HTTP request
 
 int print_as_get = 0; 
@@ -197,20 +197,24 @@ static int decode_switches (int argc, char **argv) {
       case 'p':
         mode&=~(1|2);
         mode|=2;
-        method="POST";
+        free(method); method=xstrdup("POST");
         break;
       case 'r':
         mode&=~(1|2|4);
-        if (!strncasecmp(optarg,"GET",3))
+        if (!strncasecmp(optarg,"GET",3)) {
           mode|=1;
+          free(method); method=xstrdup("GET");
      // else if (!strncasecmp(optarg,"POSTREQUEST",4))
      //   mode|=4;
-        else if (!strncasecmp(optarg,"POST",4))
+        } else if (!strncasecmp(optarg,"POST",4)) {
           mode|=2;
-        else
+          free(method); method=xstrdup("POST");
+        } else {
+          int i;
           mode|=1; // XXX
           method = strdup(optarg); 
-          {int i; for (i=0;i<strlen(method);i++) method[i]=toupper(method[i]);}
+          for (i=0;i<strlen(method);i++) method[i]=toupper(method[i]);
+        }
         break;
       case 't':
         if (op.t_key) free(op.t_key);
@@ -380,6 +384,7 @@ int main (int argc, char **argv) {
   program_name = argv[0];
   memset(&op,0,sizeof(oauthparam));
   reset_oauth_param(&op);
+  method=xstrdup("GET");
 
   // parse command line
 
@@ -514,6 +519,7 @@ int main (int argc, char **argv) {
  
   free_array(oaargc, oaargv);
   free_array(oauth_argc, oauth_argv);
+  free(method);
   return (exitval);
 }
 
