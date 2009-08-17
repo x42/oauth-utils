@@ -1,10 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([oauth-utils], [0.3.0], [robin AT gareus DOT org])
+AC_INIT([oauth-utils], [0.3.1], [robin AT gareus DOT org])
 AC_CONFIG_SRCDIR(src/oauthsign.c)
 
 AC_CANONICAL_TARGET([])
-AC_COPYRIGHT([Copyright (C) Robin Gareus 2008])
+AC_COPYRIGHT([Copyright (C) Robin Gareus 2008, 2009])
 
 AM_INIT_AUTOMAKE(oauth-utils, $PACKAGE_VERSION)
 AM_CONFIG_HEADER(src/config.h)
