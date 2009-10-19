@@ -323,7 +323,8 @@ Options:\n\
 */"\
   -r, --request <type>        HTTP request type (HEAD, POST, GET [default],..)\n\
   -p, --post                  same as -r POST\n\
-  -d, --data <key>[=<val>]    add url query parameters.\n\
+  -d, --data <key>[=<val>]    add ASCII url-query parameters.\n\
+                              Note: oauthsign will URL-encode key & value.\n\
   -m, --signature-method <m>  oauth signature method (PLAINTEXT,\n\
                               RSA-SHA1, HMAC-SHA1 [default])\n\
 "/*

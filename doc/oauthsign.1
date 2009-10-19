@@ -89,7 +89,7 @@ Set the HTTP request type (HEAD, PUT, POST, GET [default],..).
 Same as '-r POST'
 .TP
 .B \-d, \-\-data <key>[=<value>]
-Add key=value URL query parameters.
+Add key=value URL query parameters. Both key and value are expected to be plain ASCII. oauthsign will URL-encode them.
 .TP
 .B \-m, \-\-signature-method <method>
 Specify the oauth signature method (PLAINTEXT, RSA-SHA1, HMAC-SHA1 [default]).
