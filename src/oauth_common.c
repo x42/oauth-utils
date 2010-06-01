@@ -422,7 +422,7 @@ void format_array(int mode, int argc, char **argv) {
     array_format_raw(argc, 1, argv, "&");
   } else if ((mode&258) == 258) { // -- encoded POST parameters! 
   #if LIBOAUTH_VERSION_MAJOR >= 0 && LIBOAUTH_VERSION_MINOR >= 4  && LIBOAUTH_VERSION_MICRO >= 1
-    char *result = oauth_serialize_url_sep(argc, 1, argv, "&");
+    char *result = oauth_serialize_url_sep(argc, 1, argv, "&", 0);
     printf("%s\n", result); 
     free (result);
   #else

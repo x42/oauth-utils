@@ -1,3 +1,7 @@
+2010-06-01  Robin Gareus  <robin@gareus.org>
+	* version 0.3.3
+	* updated to liboauth 0.8.6 API
+
 2009-08-17  Robin Gareus  <robin@gareus.org>
 	* version 0.3.1
 	* minor fixes ('-p' parameter)
